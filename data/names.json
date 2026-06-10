@@ -1,0 +1,172 @@
+{
+"careers": {
+"1": {
+"en": "Elixirist",
+"zh": "炼丹师"
+},
+"2": {
+"en": "Fuluist",
+"zh": "符咒师"
+},
+"3": {
+"en": "Musician",
+"zh": "琴师"
+},
+"4": {
+"en": "Painter",
+"zh": "画师"
+},
+"5": {
+"en": "Formation Master",
+"zh": "阵法师"
+},
+"6": {
+"en": "Plant Master",
+"zh": "灵植师"
+},
+"7": {
+"en": "Fortune Teller",
+"zh": "命理师"
+}
+},
+"sects": {
+"1": {
+"en": "Cloud Spirit Sword Sect",
+"zh": "云灵剑宗"
+},
+"2": {
+"en": "Heptastar Pavilion",
+"zh": "七星阁"
+},
+"3": {
+"en": "Five Elements Alliance",
+"zh": "五行道盟"
+},
+"4": {
+"en": "Duan Xuan Sect",
+"zh": "锻玄宗"
+}
+},
+"characters": {
+"1000001": {
+"en": "Mu Yifeng",
+"zh": "牧逸风",
+"sect": 1
+},
+"1000002": {
+"en": "Yan Xue",
+"zh": "炎雪",
+"sect": 1
+},
+"1000003": {
+"en": "Long Yao",
+"zh": "龙瑶",
+"sect": 1
+},
+"1000004": {
+"en": "Lin Xiaoyue",
+"zh": "林小月",
+"sect": 1
+},
+"1000005": {
+"en": "Lu Jianxin",
+"zh": "陆剑心",
+"sect": 1
+},
+"1000006": {
+"en": "Li Chengyun",
+"zh": "黎承云",
+"sect": 1
+},
+"2000001": {
+"en": "Tan Shuyan",
+"zh": "谭舒雁",
+"sect": 2
+},
+"2000002": {
+"en": "Yan Chen",
+"zh": "炎尘",
+"sect": 2
+},
+"2000003": {
+"en": "Yao Ling",
+"zh": "曜灵",
+"sect": 2
+},
+"2000004": {
+"en": "Jiang Ximing",
+"zh": "姜袭明",
+"sect": 2
+},
+"2000005": {
+"en": "Wu Ce",
+"zh": "吴策",
+"sect": 2
+},
+"2000006": {
+"en": "Feng Xu",
+"zh": "风绪",
+"sect": 2
+},
+"3000001": {
+"en": "Wu Xingzhi",
+"zh": "吾行之",
+"sect": 3
+},
+"3000002": {
+"en": "Du Lingyuan",
+"zh": "杜伶鸳",
+"sect": 3
+},
+"3000003": {
+"en": "Hua Qinrui",
+"zh": "花沁蕊",
+"sect": 3
+},
+"3000004": {
+"en": "Mu Hu",
+"zh": "慕虎",
+"sect": 3
+},
+"3000005": {
+"en": "Nangong Sheng",
+"zh": "南宫生",
+"sect": 3
+},
+"3000006": {
+"en": "Qi Wangyou",
+"zh": "祁忘忧",
+"sect": 3
+},
+"4000001": {
+"en": "Xiao Bu",
+"zh": "小布",
+"sect": 4
+},
+"4000002": {
+"en": "Tu Kui",
+"zh": "屠馗",
+"sect": 4
+},
+"4000003": {
+"en": "Ye Mingming",
+"zh": "叶冥冥",
+"sect": 4
+},
+"4000004": {
+"en": "Ji Fangsheng",
+"zh": "姬方生",
+"sect": 4
+},
+"4000005": {
+"en": "Li Man",
+"zh": "李㵘",
+"sect": 4
+},
+"4000006": {
+"en": "Ling Yu",
+"zh": "聆羽",
+"sect": 4
+}
+}
+}
