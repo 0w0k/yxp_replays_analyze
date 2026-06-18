@@ -86,13 +86,14 @@ def iter_replays(path):
             continue
 
 
-def home_side(rd):
-    hu = rd.get("homePlayerId")
-    if rd["p2"]["publicData"]["uid"] == hu:
-        return "p2", hu
-    if rd["p1"]["publicData"]["uid"] == hu:
-        return "p1", hu
-    return None, hu
+def home_side(rd, uid):
+    # the file owner's side alternates p1/p2; homePlayerId is the battle's first
+    # player and is the opponent ~2/3 of the time, so match the owner's uid.
+    if rd["p2"]["publicData"]["uid"] == uid:
+        return "p2"
+    if rd["p1"]["publicData"]["uid"] == uid:
+        return "p1"
+    return None
 
 
 def main():
@@ -127,18 +128,19 @@ def main():
             ch = cidx(d.get("charId"))
             car = d.get("career", 0)
             careers_seen.add(car)
+            uid = d.get("uid")        # the file owner; their side alternates p1/p2
             pop4 += 1
             pop6 += 1 if hi else 0
 
             last_priv = None
             for rd in rs:
-                side, hu = home_side(rd)
+                side = home_side(rd, uid)
                 if side is None:
                     continue
                 pub = rd[side]["publicData"]
                 priv = rd[side]["privateData"]
                 last_priv = priv
-                win = 1 if rd.get("winerId") == hu else 0
+                win = 1 if rd.get("winerId") == uid else 0
                 rn = rd.get("round", 0)
                 # held talents this round
                 for t in {tbase(x) for x in (pub.get("talents") or []) if x}:

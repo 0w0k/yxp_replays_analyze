@@ -111,15 +111,17 @@ def main():
             ch = cidx(d.get("charId"))
             car = d.get("career", 0)
             careers_seen.add(car)
+            uid = d.get("uid")        # the file owner; their side alternates p1/p2
             pop4 += 1
             pop6 += 1 if hi else 0
             for rd in rs:
-                hu = rd.get("homePlayerId")
-                side = "p2" if rd["p2"]["publicData"]["uid"] == hu else (
-                    "p1" if rd["p1"]["publicData"]["uid"] == hu else None)
+                # homePlayerId is the battle's first player (opponent ~2/3 of the
+                # time); match the file owner's uid to read THEIR board.
+                side = "p2" if rd["p2"]["publicData"]["uid"] == uid else (
+                    "p1" if rd["p1"]["publicData"]["uid"] == uid else None)
                 if side is None:
                     continue
-                win = 1 if rd.get("winerId") == hu else 0
+                win = 1 if rd.get("winerId") == uid else 0
                 rn = rd.get("round", 0)
                 for c in rd[side]["privateData"].get("usedCards") or []:
                     if not c:

@@ -122,20 +122,21 @@ def main():
             ch = cidx(d.get("charId"))
             car = d.get("career", 0)
             careers_seen.add(car)
+            uid = d.get("uid")        # the file owner; their side alternates p1/p2
             pop4 += 1
             pop6 += 1 if hi else 0
             for rd in rs:
-                hu = rd.get("homePlayerId")
-                p2 = rd["p2"]["publicData"]["uid"]
-                side = "p2" if p2 == hu else (
-                    "p1" if rd["p1"]["publicData"]["uid"] == hu else None)
+                # NOTE: homePlayerId is the battle's first player and is the
+                # OPPONENT ~2/3 of the time. Match the file owner's uid instead.
+                side = "p2" if rd["p2"]["publicData"]["uid"] == uid else (
+                    "p1" if rd["p1"]["publicData"]["uid"] == uid else None)
                 if side is None:
                     continue
                 used = rd[side]["privateData"].get("usedCards") or []
                 fs = sorted({fam(c) for c in used if c})
                 if not fs:
                     continue
-                win = 1 if rd.get("winerId") == hu else 0
+                win = 1 if rd.get("winerId") == uid else 0
                 rn = rd.get("round", 0)
                 rounds_seen += 1
                 ids = [fidx(f) for f in fs]
