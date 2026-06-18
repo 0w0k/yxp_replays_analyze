@@ -1,5 +1,6 @@
 "use strict";
 const WIKI = "https://sharpobject.github.io/yxp_wiki/assets/cards/";
+const WIKI_FATES = "https://sharpobject.github.io/yxp_wiki/assets/fates/";
 
 // ---- i18n ------------------------------------------------------------------
 const UI = {
@@ -42,7 +43,7 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 // ---- state -----------------------------------------------------------------
 const S = {
-  th: 4000, lang: "en", sys: "tal", metric: "held",
+  th: 4000, lang: "zh", sys: "tal", metric: "held",
   careers: new Set(), chars: new Set(),
   rlo: 1, rhi: 27, sort: "wr", minGames: 50, q: "", detail: null,
 };
@@ -254,14 +255,22 @@ function headerRow() {
   return el;
 }
 function nameCell(c) {
-  if (S.sys === "dy" && c.img) {
-    return `<span class="cthumb" title="${itemName(c)}">
-      <img loading="lazy" src="${WIKI}${c.img}_${S.lang}.png"
-        onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="">
-      <span class="cnm">${itemName(c)}</span></span>`;
+  const nm = itemName(c);
+  if (S.sys === "dy") {
+    // dao-yun grants a card -> show that card's art (wiki fates folder)
+    const src = c.img ? `${WIKI_FATES}Card_${c.img}.png` : "";
+    return `<span class="cthumb" title="${nm}">
+      <img class="dyimg" loading="lazy" src="${src}"
+        onerror="this.onerror=null;this.src='${WIKI}${c.img}_zh.png'" alt="">
+      <span class="cnm">${nm}</span></span>`;
   }
-  return `<span class="cthumb tchip"><span class="tdot"></span>
-    <span class="cnm">${itemName(c)}</span></span>`;
+  // talent -> its fate icon; fall back to a dot if missing
+  const src = c.img ? `${WIKI_FATES}Icon_Talent_${c.img}.png` : "";
+  return `<span class="cthumb tchip" title="${nm}">
+    <img class="talimg" loading="lazy" src="${src}"
+      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-block'" alt="">
+    <span class="tdot" style="display:none"></span>
+    <span class="cnm">${nm}</span></span>`;
 }
 function itemRow(r, rank) {
   const names = curNames(), c = names[r.i];

@@ -11,6 +11,8 @@ import os
 
 CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
     r"D:\Coding\yixian-card-counter-with-proxy\proxy\card_id_map.json"
+HERE = os.path.dirname(os.path.abspath(__file__))
+SECT_MAP = os.path.join(HERE, "data", "sect_map.json")  # famid -> sect code (wiki-derived)
 
 
 def fam(c):
@@ -31,12 +33,18 @@ def load_resolver(ref_cards_path):
     except Exception as e:
         print("cardnames: no card_id_map", e)
         cim = {}
+    try:
+        smap = {int(k): v for k, v in json.load(open(SECT_MAP, encoding="utf-8")).items()}
+    except Exception as e:
+        print("cardnames: no sect_map", e)
+        smap = {}
 
     def resolve(famid):
         o = old.get(famid)
         cn = (o.get("cn") if o else None) or cim.get(famid) or cim.get(famid + 10000) or ""
         en = (o.get("en") if o else None) or cn or f"#{famid}"
-        sect = (o.get("sect") if o else None) or ""
+        # sect: wiki-derived map is authoritative; fall back to old catalog
+        sect = smap.get(famid) or (o.get("sect") if o else None) or ""
         img = (o.get("img") if o else None) or famid
         return {"en": en, "cn": cn, "sect": sect, "img": img}
 

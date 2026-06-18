@@ -147,3 +147,9 @@ main.mode-draft .dgames,main.mode-held .dgames{font-variant-numeric:tabular-nums
   main.mode-draft .drow{grid-template-columns:32px 1fr 60px 92px}
   main.mode-draft .dlift{display:none}
 }
+
+/* fate page images (wiki icons) */
+.talimg{width:30px;height:30px;border-radius:7px;background:#0c0e12;object-fit:cover;flex:none}
+.dyimg{width:30px;height:40px;border-radius:5px;background:#0c0e12;object-fit:contain;flex:none}
+#mHead .talimg{width:56px;height:56px;border-radius:12px}
+#mHead .dyimg{width:48px;height:64px}

@@ -54,7 +54,7 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 // ---- state -----------------------------------------------------------------
 const S = {
-  th: 4000, lang: "en",
+  th: 4000, lang: "zh",
   seasons: new Set(), careers: new Set(), chars: new Set(),
   rlo: 1, rhi: 27, sort: "lift", minGames: 50, q: "",
   combo: null, // [famAidx, famBidx]
