@@ -94,3 +94,56 @@ footer{padding:18px 24px 40px;color:var(--muted);font-size:12px;border-top:1px s
 .col:hover .tip{opacity:1}
 .chart-empty{display:flex;align-items:center;justify-content:center;width:100%;height:100%;
   color:var(--muted);font-size:13px;text-align:center;padding:0 16px}
+
+/* ---- top nav (Cards / Combos) ---- */
+.topnav{display:flex;gap:6px;padding:10px 24px 0}
+.topnav a{display:inline-block;padding:7px 16px;border:1px solid var(--line);border-bottom:none;
+  border-radius:10px 10px 0 0;color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;
+  background:var(--panel)}
+.topnav a.on{color:#fff;background:var(--panel2);border-color:var(--accent)}
+
+/* ---- combo table (deck page) ---- */
+main.deckmain{display:block;padding:14px 24px 60px}
+.drow{display:grid;grid-template-columns:46px 1fr 130px 90px 90px;align-items:center;gap:10px;
+  padding:8px 12px;border:1px solid var(--line);border-bottom:none;background:var(--panel)}
+.drow:first-of-type{border-radius:12px 12px 0 0}
+.drow:last-child{border-bottom:1px solid var(--line);border-radius:0 0 12px 12px}
+.drow:not(.dhead){cursor:pointer;transition:background .08s}
+.drow:not(.dhead):hover{background:var(--panel2)}
+.dhead{position:sticky;top:64px;z-index:10;color:var(--muted);font-size:11px;text-transform:uppercase;
+  letter-spacing:.6px;background:var(--panel2)}
+.drank{color:var(--muted);font-size:13px;text-align:center}
+.dcombo{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.cthumb{display:flex;align-items:center;gap:7px;min-width:0}
+.cthumb img{width:30px;height:40px;border-radius:5px;background:#0c0e12;object-fit:contain;flex:none}
+.cthumb .cnm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.plus{color:var(--muted);font-weight:700}
+.plus.big{font-size:26px;align-self:center;margin:0 4px}
+.dwr b{font-size:15px}
+.dwr .bar{margin-top:4px}
+.dgames{font-variant-numeric:tabular-nums;color:var(--text)}
+.dlift{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* combo modal head: two cards side by side */
+#mHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mcard{display:flex;gap:12px;align-items:center;flex:1;min-width:200px}
+.mcard img{width:80px;border-radius:10px;background:#0c0e12;aspect-ratio:3/4;object-fit:contain;flex:none}
+
+@media(max-width:680px){
+  .drow{grid-template-columns:34px 1fr 84px 64px;gap:6px}
+  .dlift{display:none}
+  .cthumb .cnm{max-width:110px}
+}
+
+/* ---- fate page (talent / dao-yun) ---- */
+main.mode-held .drow{grid-template-columns:46px 1fr 150px 110px}
+main.mode-draft .drow{grid-template-columns:46px 1fr 90px 150px 110px}
+.cthumb.tchip{gap:8px}
+.tdot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none;
+  box-shadow:0 0 0 3px rgba(91,140,255,.18)}
+main.mode-draft .dgames,main.mode-held .dgames{font-variant-numeric:tabular-nums}
+@media(max-width:680px){
+  main.mode-held .drow{grid-template-columns:32px 1fr 92px 64px}
+  main.mode-draft .drow{grid-template-columns:32px 1fr 60px 92px}
+  main.mode-draft .dlift{display:none}
+}

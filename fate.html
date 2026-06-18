@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yi Xian Talent / Fate Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html" data-i18n="navCards">Cards</a>
+  <a href="deck.html" data-i18n="navDecks">Combos</a>
+  <a href="fate.html" class="on" data-i18n="navFate">Fate</a>
+</nav>
+
+<header>
+  <h1 data-i18n="fateTitle">Yi Xian Talent / Dao-Yun Explorer</h1>
+  <p class="sub">
+    <span data-i18n="fateSubPre">天衍万象 ·</span>
+    <span id="gamecount">…</span>
+    <span data-i18n="fateSubMid">ranked games ·</span>
+    <span id="rowcount">…</span>
+    <span data-i18n="fateSubPost">shown</span>
+  </p>
+</header>
+
+<div class="controls">
+  <div class="ctl">
+    <label data-i18n="tier">DaoXin tier</label>
+    <div class="seg" id="threshold">
+      <button data-v="4000" class="on">≥ 4000</button>
+      <button data-v="6000">≥ 6000</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="language">Language</label>
+    <div class="seg" id="lang">
+      <button data-v="en" class="on">EN</button>
+      <button data-v="zh">中文</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="system">System</label>
+    <div class="seg" id="system">
+      <button data-v="tal" class="on" data-i18n="talent">Talent</button>
+      <button data-v="dy" data-i18n="daoyun">Dao-Yun</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="metric">Metric</label>
+    <div class="seg" id="metric">
+      <button data-v="held" class="on" data-i18n="mHeld">Held win rate</button>
+      <button data-v="draft" data-i18n="mDraft">Draft</button>
+    </div>
+  </div>
+
+  <div class="ctl" id="career-ctl">
+    <label data-i18n="career">Career</label>
+    <div class="ms" data-ms="career"></div>
+  </div>
+  <div class="ctl" id="character-ctl">
+    <label data-i18n="character">Character</label>
+    <div class="ms" data-ms="character"></div>
+  </div>
+
+  <div class="ctl" id="rounds-ctl">
+    <label><span data-i18n="rounds">Rounds</span>: <span id="roundlbl">1–27</span></label>
+    <div class="dual" id="rounds">
+      <input type="range" id="rlo" min="1" max="27" value="1">
+      <input type="range" id="rhi" min="1" max="27" value="27">
+    </div>
+  </div>
+
+  <div class="ctl">
+    <label data-i18n="sortby">Sort by</label>
+    <select id="sort"></select>
+  </div>
+  <div class="ctl">
+    <label><span data-i18n="mingames">Min games</span> <span id="minlbl">50</span></label>
+    <input type="range" id="mingames" min="0" max="2000" value="50" step="10">
+  </div>
+  <div class="ctl grow">
+    <label data-i18n="search">Search</label>
+    <input type="text" id="search" placeholder="…">
+  </div>
+</div>
+
+<main id="grid" class="deckmain"></main>
+<div id="empty" class="empty" hidden data-i18n="nomatch">No rows match these filters.</div>
+
+<footer>
+  <span data-i18n="footData">Data:</span>
+  <a href="https://huggingface.co/datasets/sharpobject/yxp_replays">sharpobject/yxp_replays</a>.
+  <span id="fateNote" data-i18n="fateFootNote">Held win rate = round wins / rounds held (round-level, like the card page).
+  Draft pick rate = times selected / times offered in a 4-pick. The 仙命/fateBranch system itself is not recorded in the replays, so this analyses the talent draft + dao-yun.</span>
+</footer>
+
+<!-- detail modal -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-bg"></div>
+  <div class="modal-card">
+    <button class="close" id="modalClose">✕</button>
+    <div class="modal-head" id="mHead"></div>
+    <div class="mTot" id="mTot"></div>
+    <div class="chart-wrap">
+      <div class="chart-title" data-i18n="wrByRound">Win rate by round</div>
+      <div id="chartWR" class="chart"></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title" data-i18n="popByRound">Popularity by round (games)</div>
+      <div id="chartPop" class="chart"></div>
+    </div>
+  </div>
+</div>
+
+<script src="fate.js"></script>
+</body>
+</html>
