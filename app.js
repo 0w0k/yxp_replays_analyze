@@ -49,7 +49,9 @@ const SECT_CODE = {
   mu: { en: "Musician", zh: "琴师" }, ft: { en: "Fortune Teller", zh: "命理师" },
   pm: { en: "Plant Master", zh: "灵植师" }, fm: { en: "Formation Master", zh: "阵法师" },
   pa: { en: "Painter", zh: "画师" }, no_marking: { en: "Neutral", zh: "无门派" },
-  spiritual_pet: { en: "Spirit Pet", zh: "灵宠" }, talisman: { en: "Talisman", zh: "符箓" }, "": { en: "—", zh: "—" },
+  spiritual_pet: { en: "Spirit Pet", zh: "灵宠" }, talisman: { en: "Treasure", zh: "法宝" },
+  rh: { en: "Fusion", zh: "融汇" }, tr: { en: "Transform", zh: "转换牌" }, mj: { en: "Dream", zh: "梦境" },
+  "": { en: "—", zh: "—" },
 };
 const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 

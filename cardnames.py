@@ -12,7 +12,7 @@ import os
 CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
     r"D:\Coding\yixian-card-counter-with-proxy\proxy\card_id_map.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
-SECT_MAP = os.path.join(HERE, "data", "sect_map.json")  # famid -> sect code (wiki-derived)
+WIKI_DATA = os.path.join(HERE, "data", "wiki.json")  # single source of truth
 
 
 def fam(c):
@@ -20,6 +20,7 @@ def fam(c):
 
 
 def load_resolver(ref_cards_path):
+    # img (wiki card-art id) still comes from the old catalog where present
     old = {}
     try:
         ref = json.load(open(ref_cards_path, encoding="utf-8"))
@@ -28,23 +29,21 @@ def load_resolver(ref_cards_path):
     except Exception as e:
         print("cardnames: no ref catalog", e)
     try:
-        cim = json.load(open(CARD_ID_MAP, encoding="utf-8"))
-        cim = {int(k): v for k, v in cim.items()}
+        wiki = json.load(open(WIKI_DATA, encoding="utf-8"))["cards"]
     except Exception as e:
-        print("cardnames: no card_id_map", e)
-        cim = {}
+        print("cardnames: no wiki.json", e)
+        wiki = {}
     try:
-        smap = {int(k): v for k, v in json.load(open(SECT_MAP, encoding="utf-8")).items()}
-    except Exception as e:
-        print("cardnames: no sect_map", e)
-        smap = {}
+        cim = {int(k): v for k, v in json.load(open(CARD_ID_MAP, encoding="utf-8")).items()}
+    except Exception:
+        cim = {}
 
     def resolve(famid):
+        w = wiki.get(str(famid), {})
         o = old.get(famid)
-        cn = (o.get("cn") if o else None) or cim.get(famid) or cim.get(famid + 10000) or ""
-        en = (o.get("en") if o else None) or cn or f"#{famid}"
-        # sect: wiki-derived map is authoritative; fall back to old catalog
-        sect = smap.get(famid) or (o.get("sect") if o else None) or ""
+        cn = w.get("cn") or (o.get("cn") if o else None) or cim.get(famid) or cim.get(famid + 10000) or ""
+        en = w.get("en") or (o.get("en") if o else None) or cn or f"#{famid}"
+        sect = w.get("sect") or (o.get("sect") if o else None) or ""
         img = (o.get("img") if o else None) or famid
         return {"en": en, "cn": cn, "sect": sect, "img": img}
 
