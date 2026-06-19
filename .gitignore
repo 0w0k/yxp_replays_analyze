@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 proxy/output/
 .DS_Store
+tmp_wiki.html
+/tmp/

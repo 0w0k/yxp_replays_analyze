@@ -1,16 +1,18 @@
 "use strict";
-const WIKI_FATES = "https://sharpobject.github.io/yxp_wiki/assets/fates/";
+// 天衍万象仙命（天衍）统计页。
+// 数据：data/tianyan.json（fateStrategyData 聚合）+ data/fates_wiki.json（wiki 权威映射）。
+// 命格 id 直接对应 fates_wiki.byId，名称/门派/分类/图标全部取自 wiki。
 
 const UI = {
   en: {
     xyTitle: "Heavenly Derivation — fate picks",
     xySubPre: "Tian Yan Wan Xiang · 4-pick ·", xySubMid: "offers ·", xySubPost: "fates",
     navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
-    tier: "DaoXin tier", language: "Language", pickRound: "Pick", allPicks: "All",
-    career: "Career", character: "Character", sortby: "Sort by",
+    tier: "DaoXin tier", language: "Language", pickRound: "Breakthrough", allPicks: "All",
+    fateSect: "Fate sect", career: "Career", character: "Character", sortby: "Sort by",
     minoffers: "Min offers", search: "Search", nomatch: "No fates match these filters.",
     footData: "Data:",
-    xyFootNote: "At rounds ~3/6/9/11 each player picks 1 of 4 Heavenly-Derivation fates (later picks offer level-ups of fates you hold). Pick rate = picked / offered; held WR = round wins while holding it.",
+    xyFootNote: "At each of the 3 breakthroughs (strategy id 3/6/9) every player picks 1 of 4 Heavenly-Derivation fates (FateStrategyConfig). Pick rate = picked / offered; held WR = round wins while holding it.",
     all: "All", none: "None", allSel: "All", nSel: "selected", searchPh: "name…",
     offered: "Offered", pickrate: "Pick rate", heldwr: "Held WR", cardname: "Name",
     noSideJob: "No side-job", colFate: "Heavenly fate",
@@ -19,11 +21,11 @@ const UI = {
     xyTitle: "天衍选择统计",
     xySubPre: "天衍万象 · 4选1 ·", xySubMid: "次出现 ·", xySubPost: "个仙命",
     navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
-    tier: "道心段位", language: "语言", pickRound: "选择轮次", allPicks: "全部",
-    career: "副职", character: "角色", sortby: "排序",
+    tier: "道心段位", language: "语言", pickRound: "突破", allPicks: "全部",
+    fateSect: "门派", career: "副职", character: "角色", sortby: "排序",
     minoffers: "最少出现", search: "搜索", nomatch: "没有符合条件的仙命。",
     footData: "数据：",
-    xyFootNote: "约第3/6/9/11轮，每人从随机4个天衍万象仙命里4选1（后几次是把已有仙命升级）。选取率=被选/出现；持有胜率=带着它时的回合胜率。",
+    xyFootNote: "三次突破（strategy id 3/6/9）各从随机 4 个天衍万象仙命里 4 选 1（FateStrategyConfig）。选取率=被选/出现；持有胜率=带着它时的回合胜率。",
     all: "全部", none: "清空", allSel: "全部", nSel: "项已选", searchPh: "名称…",
     offered: "出现次数", pickrate: "选取率", heldwr: "持有胜率", cardname: "名称",
     noSideJob: "无副职", colFate: "天衍仙命",
@@ -33,20 +35,27 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 const S = {
   th: 4000, lang: "zh", slot: -1,
-  careers: new Set(), chars: new Set(),
+  careers: new Set(), chars: new Set(), fatesects: new Set(),
   sort: "pr", minGames: 30, q: "",
 };
-let NAMES = null, F = null;
+let NAMES = null, F = null, W = null, ICON = "", SECT_OF = null, MAXID = 0;
 const $ = (s) => document.querySelector(s);
 let raf = 0;
 const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
 
 async function boot() {
-  NAMES = await fetch("data/names.json").then((r) => r.json());
-  F = await fetch("data/fates.json").then((r) => r.json());
+  [NAMES, F, W] = await Promise.all([
+    fetch("data/names.json").then((r) => r.json()),
+    fetch("data/tianyan.json").then((r) => r.json()),
+    fetch("data/fates_wiki.json").then((r) => r.json()),
+  ]);
+  ICON = W._meta.iconBase;
+  SECT_OF = {};                                   // fateId -> sect name
+  for (const k in W.byId) { SECT_OF[+k] = W.byId[k].sect; if (+k > MAXID) MAXID = +k; }
   S.careers = new Set(F.meta.careers);
   S.chars = new Set(F.meta.charIds);
-  buildCareer(); buildCharacter(); wireStatic(); applyLang(); render();
+  S.fatesects = new Set(W.sects.map((s) => s.name));
+  buildFateSect(); buildCareer(); buildCharacter(); wireStatic(); applyLang(); render();
 }
 
 // ---- multiselect (shared pattern) ------------------------------------------
@@ -79,6 +88,21 @@ function row(label, checked, onToggle, cls = "") {
   r.appendChild(cb);
   const s = document.createElement("span"); s.textContent = label; r.appendChild(s);
   return r;
+}
+// 命格门派（来自 wiki：通用/云灵剑宗/七星阁/五行道盟/锻玄宗）
+function buildFateSect() {
+  const host = document.querySelector('[data-ms="fatesect"]'), all = W.sects.map((s) => s.name);
+  multiselect(host,
+    () => summaryCount(S.fatesects, all.length, t("allSel")),
+    (panel) => {
+      panel.innerHTML = "";
+      panel.appendChild(tools(
+        () => { all.forEach((n) => S.fatesects.add(n)); host._refresh(); schedule(); },
+        () => { S.fatesects.clear(); host._refresh(); schedule(); }));
+      W.sects.forEach((s) => panel.appendChild(row(
+        `${s.name} (${s.fates.length})`, S.fatesects.has(s.name),
+        (on) => { on ? S.fatesects.add(s.name) : S.fatesects.delete(s.name); host._refresh(); schedule(); })));
+    });
 }
 function careerName(c) { return c === 0 ? t("noSideJob") : (NAMES.careers[c] ? NAMES.careers[c][S.lang] : "" + c); }
 function buildCareer() {
@@ -126,7 +150,8 @@ function buildCharacter() {
 
 // ---- helpers ---------------------------------------------------------------
 function selectedCharFlags() { return F.meta.charIds.map((id) => S.chars.has(id)); }
-function itemName(c) { return (S.lang === "zh" && c.cn) ? c.cn : (c.en || c.cn || "#"); }
+function fateName(id) { const i = W.byId[id]; return (i && i.name) || ("#" + id); }
+function fateIcon(id) { const i = W.byId[id]; return i && i.icon ? ICON + i.icon : ""; }
 function wrColor(wr) {
   const x = Math.max(0, Math.min(1, (wr - 0.4) / 0.2));
   return `rgb(${Math.round(232 + (54 - 232) * x)},${Math.round(85 + (196 - 85) * x)},${Math.round(78 + (107 - 78) * x)})`;
@@ -134,19 +159,19 @@ function wrColor(wr) {
 
 // ---- aggregation -----------------------------------------------------------
 function aggregate() {
-  const names = F.talentNames, N = names.length;
-  const A = F.talSlot || [], st = F.meta.slotStride;
+  const N = MAXID + 1;
   const careers = S.careers, charSel = selectedCharFlags();
-  const oc = S.th === 6000 ? 7 : 5, pc = S.th === 6000 ? 8 : 6;  // offered, picked
+  const oc = S.th === 6000 ? 7 : 5, pc = S.th === 6000 ? 8 : 6;  // offered, picked cols
   const off = new Float64Array(N), pick = new Float64Array(N);
+  const A = F.draft || [], st = F.meta.draftStride;
   for (let i = 0; i < A.length; i += st) {
     if (S.slot >= 0 && A[i + 3] !== S.slot) continue;
     if (!charSel[A[i + 1]] || !careers.has(A[i + 2])) continue;
     const id = A[i + 4];
     off[id] += A[i + oc]; pick[id] += A[i + pc];
   }
-  // held win rate (all rounds) for the "is it good" column
-  const H = F.talHeld, hs = F.meta.heldStride, hw = S.th === 6000 ? 7 : 5, hg = S.th === 6000 ? 8 : 6;
+  // held win rate (all rounds) — independent of breakthrough slot
+  const H = F.held || [], hs = F.meta.heldStride, hw = S.th === 6000 ? 7 : 5, hg = S.th === 6000 ? 8 : 6;
   const w = new Float64Array(N), g = new Float64Array(N);
   for (let i = 0; i < H.length; i += hs) {
     if (!charSel[H[i + 1]] || !careers.has(H[i + 2])) continue;
@@ -158,19 +183,20 @@ function aggregate() {
 
 // ---- render ----------------------------------------------------------------
 function render() {
-  const names = F.talentNames;
   const { off, pick, w, g } = aggregate();
   const q = S.q.toLowerCase();
-  const match = (c) => !q || (c.en || "").toLowerCase().includes(q) || (c.cn || "").includes(S.q);
+  const match = (id) => !q || fateName(id).includes(S.q) || ("" + id).includes(q);
   let rows = [], totalOff = 0;
-  for (let i = 0; i < names.length; i++) {
-    totalOff += off[i];
-    if (off[i] < S.minGames || !match(names[i])) continue;
-    rows.push({ i, off: off[i], pr: pick[i] / off[i], hw: g[i] ? w[i] / g[i] : null });
+  for (let id = 1; id <= MAXID; id++) {
+    if (!off[id]) continue;
+    if (!S.fatesects.has(SECT_OF[id])) continue;
+    totalOff += off[id];
+    if (off[id] < S.minGames || !match(id)) continue;
+    rows.push({ id, off: off[id], pr: pick[id] / off[id], hw: g[id] ? w[id] / g[id] : null });
   }
   if (S.sort === "off") rows.sort((a, b) => b.off - a.off);
   else if (S.sort === "heldwr") rows.sort((a, b) => (b.hw ?? -1) - (a.hw ?? -1));
-  else if (S.sort === "name") rows.sort((a, b) => itemName(names[a.i]).localeCompare(itemName(names[b.i])));
+  else if (S.sort === "name") rows.sort((a, b) => fateName(a.id).localeCompare(fateName(b.id)));
   else rows.sort((a, b) => b.pr - a.pr || b.off - a.off);
 
   $("#gamecount").textContent = Math.round(totalOff).toLocaleString();
@@ -189,21 +215,22 @@ function headerRow() {
     <div class="dlift">${t("heldwr")}</div>`;
   return el;
 }
-function nameCell(c) {
-  const src = c.img ? `${WIKI_FATES}Icon_Talent_${c.img}.png` : "";
-  return `<span class="cthumb tchip" title="${itemName(c)}">
+function nameCell(id) {
+  const info = W.byId[id] || {};
+  const nm = fateName(id), src = fateIcon(id);
+  const sub = info.sect ? `<span class="fsect">${info.sect}${info.category ? " · " + info.category : ""}</span>` : "";
+  return `<span class="cthumb tchip" title="${nm}${info.desc ? " — " + info.desc : ""}">
     <img class="talimg" loading="lazy" src="${src}"
       onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-block'" alt="">
     <span class="tdot" style="display:none"></span>
-    <span class="cnm">${itemName(c)}</span></span>`;
+    <span class="cnm">${nm}</span>${sub}</span>`;
 }
 function itemRow(r, rank) {
-  const c = F.talentNames[r.i];
   const hwTxt = r.hw == null ? "—" : `<span style="color:${wrColor(r.hw)}">${(r.hw * 100).toFixed(1)}%</span>`;
   const el = document.createElement("div");
   el.className = "drow";
   el.innerHTML = `<div class="drank">${rank}</div>
-    <div class="dcombo">${nameCell(c)}</div>
+    <div class="dcombo">${nameCell(r.id)}</div>
     <div class="dgames">${r.off.toLocaleString()}</div>
     <div class="dwr"><b>${(r.pr * 100).toFixed(1)}%</b>
       <div class="bar"><i style="width:${(r.pr * 100).toFixed(1)}%;background:#5b8cff"></i></div></div>
@@ -222,7 +249,7 @@ function applyLang() {
   document.documentElement.lang = S.lang === "zh" ? "zh" : "en";
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   $("#search").placeholder = t("searchPh");
-  ["career", "character"].forEach((k) => {
+  ["fatesect", "career", "character"].forEach((k) => {
     const h = document.querySelector(`[data-ms="${k}"]`); if (h && h._refresh) h._refresh();
   });
   buildSortOptions(); render();

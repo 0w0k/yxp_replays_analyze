@@ -11,13 +11,13 @@
   <a href="index.html" data-i18n="navCards">Cards</a>
   <a href="deck.html" data-i18n="navDecks">Combos</a>
   <a href="fate.html" data-i18n="navFate">Fate</a>
-  <a href="xianyan.html" class="on" data-i18n="navXY">Heavenly</a>
+  <a href="tianyan.html" class="on" data-i18n="navXY">Heavenly</a>
 </nav>
 
 <header>
   <h1 data-i18n="xyTitle">Heavenly Derivation — fate picks</h1>
   <p class="sub">
-    <span data-i18n="xySubPre">天衍万象 · 4-pick at rounds 3/6/9/11 ·</span>
+    <span data-i18n="xySubPre">天衍万象 · 4-pick at 3 breakthroughs ·</span>
     <span id="gamecount">…</span>
     <span data-i18n="xySubMid">offers ·</span>
     <span id="rowcount">…</span>
@@ -47,10 +47,13 @@
       <button data-v="0">1</button>
       <button data-v="1">2</button>
       <button data-v="2">3</button>
-      <button data-v="3">4</button>
     </div>
   </div>
 
+  <div class="ctl" id="fatesect-ctl">
+    <label data-i18n="fateSect">Fate sect</label>
+    <div class="ms" data-ms="fatesect"></div>
+  </div>
   <div class="ctl" id="career-ctl">
     <label data-i18n="career">Career</label>
     <div class="ms" data-ms="career"></div>
@@ -80,9 +83,9 @@
 <footer>
   <span data-i18n="footData">Data:</span>
   <a href="https://huggingface.co/datasets/sharpobject/yxp_replays">sharpobject/yxp_replays</a> ·
-  <span data-i18n="xyFootNote">At rounds ~3/6/9/11 each player picks 1 of 4 Heavenly-Derivation fates (the later picks offer level-ups of fates you already hold). Pick rate = picked / offered; held WR = round wins while holding it.</span>
+  <span data-i18n="xyFootNote">At each of the 3 breakthroughs (strategy id 3/6/9) every player picks 1 of 4 Heavenly-Derivation fates (FateStrategyConfig). Pick rate = picked / offered; held WR = round wins while holding it.</span>
 </footer>
 
-<script src="xianyan.js"></script>
+<script src="tianyan.js"></script>
 </body>
 </html>
