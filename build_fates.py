@@ -102,6 +102,7 @@ def main():
     careers_seen = set()
     tal_held = defaultdict(lambda: [0, 0, 0, 0])   # (s,ch,car,rd,tal)->[w,g,w6,g6]
     tal_draft = defaultdict(lambda: [0, 0, 0, 0])  # (s,ch,car,tal)->[off,pick,off6,pick6]
+    tal_slot = defaultdict(lambda: [0, 0, 0, 0])   # 天衍 (s,ch,car,slot,tal)->[off,pick,off6,pick6]
     dy_held = defaultdict(lambda: [0, 0, 0, 0])
     dy_draft = defaultdict(lambda: [0, 0, 0, 0])
     pop4 = pop6 = 0
@@ -160,9 +161,11 @@ def main():
                         v[2] += win
                         v[3] += 1
 
-            # draft: selection lists are cumulative -> use the final round's
+            # draft: selection lists are cumulative -> use the final round's.
+            # talentSelectionDatas = 天衍选择: 4-pick at slots id 2..5 (rounds ~3/6/9/11).
             if last_priv is not None:
                 for ev in (last_priv.get("talentSelectionDatas") or []):
+                    slot = (ev.get("id") or 0) - 2   # id 2..5 -> slot 0..3
                     bases = {tbase(o) for o in ev.get("pendings", []) if o}
                     sel = tbase(ev.get("selected") or 0)
                     for b in bases:
@@ -174,6 +177,15 @@ def main():
                             v[2] += 1
                             if b == sel:
                                 v[3] += 1
+                        if slot >= 0:           # 天衍 per-slot offered/picked
+                            v2 = tal_slot[(s, ch, car, slot, b)]
+                            v2[0] += 1
+                            if b == sel:
+                                v2[1] += 1
+                            if hi:
+                                v2[2] += 1
+                                if b == sel:
+                                    v2[3] += 1
                 for ev in (last_priv.get("daoYunSelectionDatas") or []):
                     opts = {o for o in ev.get("pendings", []) if o}
                     sel = ev.get("selected") or 0
@@ -241,6 +253,14 @@ def main():
             out += [s, ch, car, pos[idv], v[0], v[1], v[2], v[3]]
         return out
 
+    def emit_slot(dd, pos):
+        out = []
+        for (s, ch, car, slot, idv), v in dd.items():
+            if v[0] < MIN_DRAFT or idv not in pos:
+                continue
+            out += [s, ch, car, slot, pos[idv], v[0], v[1], v[2], v[3]]
+        return out
+
     out = {
         "meta": {
             "seasons": SEASONS,
@@ -253,12 +273,15 @@ def main():
             "archives": len(ARCHIVES),
             "heldStride": 9,    # s,ch,car,rd, id, w,g, w6,g6
             "draftStride": 8,   # s,ch,car, id, offered,picked, off6,pick6
+            "slotStride": 9,    # s,ch,car,slot, id, offered,picked, off6,pick6 (天衍选择)
+            "slots": 4,         # 天衍选择 4 次 (slot 0..3, id 2..5)
             "note": "round-level win rate; 仙命/fateBranch absent in data, this is the talent draft",
         },
         "talentNames": [talent_name(t) for t in tal_ids],
         "daoyunNames": [daoyun_name(t) for t in dy_ids],
         "talHeld": emit_held(tal_held, tal_pos),
         "talDraft": emit_draft(tal_draft, tal_pos),
+        "talSlot": emit_slot(tal_slot, tal_pos),
         "dyHeld": emit_held(dy_held, dy_pos),
         "dyDraft": emit_draft(dy_draft, dy_pos),
     }

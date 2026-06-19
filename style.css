@@ -153,3 +153,10 @@ main.mode-draft .dgames,main.mode-held .dgames{font-variant-numeric:tabular-nums
 .dyimg{width:30px;height:40px;border-radius:5px;background:#0c0e12;object-fit:contain;flex:none}
 #mHead .talimg{width:56px;height:56px;border-radius:12px}
 #mHead .dyimg{width:48px;height:64px}
+
+/* multi-card combo rows (sizes 4-6): compact thumbnails, hide names to fit */
+main.deckmain.big .dcombo{gap:4px}
+main.deckmain.big .cthumb .cnm{display:none}
+main.deckmain.big .cthumb img{width:26px;height:35px}
+main.deckmain.big .plus{font-size:11px}
+#size button{padding:7px 10px;min-width:0}

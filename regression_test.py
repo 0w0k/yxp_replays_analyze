@@ -94,6 +94,32 @@ def main():
     check("every card sect matches wiki.json", not bad,
           f"{len(bad)} mismatch e.g. {bad[:3]}")
 
+    # ---- multi-card combos (combos.json) ---------------------------------
+    print("== multi-card combos ==")
+    try:
+        cb = D("combos.json")
+        sizes = list(cb["combos"].keys())
+        check("combos: sizes 3-6", sizes == ["3", "4", "5", "6"], str(sizes))
+        chashed = [c for c in cb["cards"] if c["en"].startswith("#")]
+        cempty = [c for c in cb["cards"] if not c["sect"]]
+        check("combos: no #id / empty sect", not chashed and not cempty,
+              f"{len(chashed)} #id, {len(cempty)} empty")
+        # home-fix: 陆剑心 (sw) never has 七星阁-exclusive 星爆术 in any triple
+        cci = cb["meta"]["charIds"].index(1000005)
+        cstar = [i for i, c in enumerate(cb["cards"]) if c["cn"] == "星爆术"]
+        A, st = cb["combos"]["3"], 3 + 3 + 4
+        cbad = sum(1 for i in range(0, len(A), st)
+                   if A[i + 1] == cci and any(A[i + 3 + j] in cstar for j in range(3)))
+        check("combos: 陆剑心 triples with 星爆术 == 0", cbad == 0, f"{cbad}")
+    except Exception as e:
+        check("combos.json present", False, str(e))
+
+    # ---- 天衍 (talSlot) ---------------------------------------------------
+    print("== 天衍 selection ==")
+    slot = fates.get("talSlot", [])
+    check("talSlot present", len(slot) > 0, f"{len(slot)//9} rows")
+    check("4 slots", fates["meta"].get("slots") == 4, str(fates["meta"].get("slots")))
+
     print(f"\n{'='*40}\n{len(passes)} passed, {len(fails)} failed")
     if fails:
         print("FAILED:", fails)

@@ -7,7 +7,7 @@ const UI = {
   en: {
     fateTitle: "Yi Xian Talent / Dao-Yun Explorer",
     fateSubPre: "Tian Yan Wan Xiang ·", fateSubMid: "ranked games ·", fateSubPost: "shown",
-    navCards: "Cards", navDecks: "Combos", navFate: "Fate",
+    navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
     tier: "DaoXin tier", language: "Language", system: "System", metric: "Metric",
     talent: "Talent", daoyun: "Dao-Yun", mHeld: "Held win rate", mDraft: "Draft",
     career: "Career", character: "Character", rounds: "Rounds", sortby: "Sort by",
@@ -24,7 +24,7 @@ const UI = {
   zh: {
     fateTitle: "弈仙牌 天赋 / 道韵分析",
     fateSubPre: "天衍万象 ·", fateSubMid: "次排位对局 ·", fateSubPost: "项",
-    navCards: "卡牌", navDecks: "卡组", navFate: "仙命",
+    navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
     tier: "道心段位", language: "语言", system: "系统", metric: "指标",
     talent: "天赋", daoyun: "道韵", mHeld: "持有胜率", mDraft: "选秀",
     career: "副职", character: "角色", rounds: "回合", sortby: "排序",

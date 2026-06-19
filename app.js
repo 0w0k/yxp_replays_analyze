@@ -5,7 +5,7 @@ const STRIDE = 8; // [seasonIdx, charIdx, career, fam, level, round, wins, losse
 // ---- i18n ------------------------------------------------------------------
 const UI = {
   en: {
-    navCards: "Cards", navDecks: "Combos", navFate: "Fate",
+    navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
     title: "Yi Xian Card Explorer", subPre: "Win rate & popularity from",
     subMid: "card-battles ·", subPost: "cards shown", tier: "DaoXin tier",
     language: "Language", season: "Season", career: "Career", character: "Character",
@@ -19,7 +19,7 @@ const UI = {
     notEnough: "Not enough data to calculate win rate at this Min games.",
   },
   zh: {
-    navCards: "卡牌", navDecks: "卡组", navFate: "仙命",
+    navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
     title: "弈仙牌 卡牌数据", subPre: "数据来自", subMid: "次出战 ·", subPost: "张卡牌",
     tier: "道心段位", language: "语言", season: "赛季", career: "副职", character: "角色",
     rounds: "回合", sortby: "排序", popularity: "使用率", winrate: "胜率", cardname: "名称",

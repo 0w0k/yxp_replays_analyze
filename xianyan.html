@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yi Xian — Heavenly Derivation picks</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html" data-i18n="navCards">Cards</a>
+  <a href="deck.html" data-i18n="navDecks">Combos</a>
+  <a href="fate.html" data-i18n="navFate">Fate</a>
+  <a href="xianyan.html" class="on" data-i18n="navXY">Heavenly</a>
+</nav>
+
+<header>
+  <h1 data-i18n="xyTitle">Heavenly Derivation — fate picks</h1>
+  <p class="sub">
+    <span data-i18n="xySubPre">天衍万象 · 4-pick at rounds 3/6/9/11 ·</span>
+    <span id="gamecount">…</span>
+    <span data-i18n="xySubMid">offers ·</span>
+    <span id="rowcount">…</span>
+    <span data-i18n="xySubPost">fates</span>
+  </p>
+</header>
+
+<div class="controls">
+  <div class="ctl">
+    <label data-i18n="tier">DaoXin tier</label>
+    <div class="seg" id="threshold">
+      <button data-v="4000" class="on">≥ 4000</button>
+      <button data-v="6000">≥ 6000</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="language">Language</label>
+    <div class="seg" id="lang">
+      <button data-v="en">EN</button>
+      <button data-v="zh" class="on">中文</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="pickRound">Pick</label>
+    <div class="seg" id="slot">
+      <button data-v="-1" class="on" data-i18n="allPicks">All</button>
+      <button data-v="0">1</button>
+      <button data-v="1">2</button>
+      <button data-v="2">3</button>
+      <button data-v="3">4</button>
+    </div>
+  </div>
+
+  <div class="ctl" id="career-ctl">
+    <label data-i18n="career">Career</label>
+    <div class="ms" data-ms="career"></div>
+  </div>
+  <div class="ctl" id="character-ctl">
+    <label data-i18n="character">Character</label>
+    <div class="ms" data-ms="character"></div>
+  </div>
+
+  <div class="ctl">
+    <label data-i18n="sortby">Sort by</label>
+    <select id="sort"></select>
+  </div>
+  <div class="ctl">
+    <label><span data-i18n="minoffers">Min offers</span> <span id="minlbl">30</span></label>
+    <input type="range" id="mingames" min="0" max="2000" value="30" step="10">
+  </div>
+  <div class="ctl grow">
+    <label data-i18n="search">Search</label>
+    <input type="text" id="search" placeholder="…">
+  </div>
+</div>
+
+<main id="grid" class="deckmain mode-draft"></main>
+<div id="empty" class="empty" hidden data-i18n="nomatch">No fates match these filters.</div>
+
+<footer>
+  <span data-i18n="footData">Data:</span>
+  <a href="https://huggingface.co/datasets/sharpobject/yxp_replays">sharpobject/yxp_replays</a> ·
+  <span data-i18n="xyFootNote">At rounds ~3/6/9/11 each player picks 1 of 4 Heavenly-Derivation fates (the later picks offer level-ups of fates you already hold). Pick rate = picked / offered; held WR = round wins while holding it.</span>
+</footer>
+
+<script src="xianyan.js"></script>
+</body>
+</html>

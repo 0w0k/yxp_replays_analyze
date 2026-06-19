@@ -11,6 +11,7 @@
   <a href="index.html" data-i18n="navCards">Cards</a>
   <a href="deck.html" class="on" data-i18n="navDecks">Combos</a>
   <a href="fate.html" data-i18n="navFate">Fate</a>
+  <a href="xianyan.html" data-i18n="navXY">Heavenly</a>
 </nav>
 
 <header>
@@ -39,6 +40,16 @@
       <button data-v="zh" class="on">中文</button>
     </div>
   </div>
+  <div class="ctl">
+    <label data-i18n="comboSize">Cards</label>
+    <div class="seg" id="size">
+      <button data-v="2" class="on">2</button>
+      <button data-v="3">3</button>
+      <button data-v="4">4</button>
+      <button data-v="5">5</button>
+      <button data-v="6">6</button>
+    </div>
+  </div>
 
   <div class="ctl" id="career-ctl">
     <label data-i18n="career">Career</label>
@@ -49,7 +60,7 @@
     <div class="ms" data-ms="character"></div>
   </div>
 
-  <div class="ctl">
+  <div class="ctl" id="rounds-ctl">
     <label><span data-i18n="rounds">Rounds</span>: <span id="roundlbl">1–27</span></label>
     <div class="dual" id="rounds">
       <input type="range" id="rlo" min="1" max="27" value="1">
