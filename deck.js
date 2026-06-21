@@ -6,7 +6,7 @@ const UI = {
   en: {
     deckTitle: "Yi Xian Combo Explorer",
     deckSubPre: "Card-pair synergy from", deckSubMid: "ranked games ·",
-    deckSubPost: "combos shown", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
+    deckSubPost: "combos shown", navHome: "Home", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
     tier: "DaoXin tier", language: "Language", season: "Season", career: "Career",
     character: "Character", rounds: "Rounds", sortby: "Sort by",
     sortLift: "Synergy (lift)", winrate: "Win rate", games: "Games", comboSize: "Cards",
@@ -22,7 +22,7 @@ const UI = {
   zh: {
     deckTitle: "弈仙牌 卡组组合分析",
     deckSubPre: "卡牌组合协同，数据来自", deckSubMid: "次排位对局 ·",
-    deckSubPost: "个组合", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
+    deckSubPost: "个组合", navHome: "首页", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
     tier: "道心段位", language: "语言", season: "赛季", career: "副职",
     character: "角色", rounds: "回合", sortby: "排序",
     sortLift: "协同提升", winrate: "胜率", games: "场次", comboSize: "组合大小",

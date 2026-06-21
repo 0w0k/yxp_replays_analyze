@@ -7,7 +7,7 @@ const UI = {
   en: {
     xyTitle: "Heavenly Derivation — fate picks",
     xySubPre: "Tian Yan Wan Xiang · 4-pick ·", xySubMid: "offers ·", xySubPost: "fates",
-    navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
+    navHome: "Home", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
     tier: "DaoXin tier", language: "Language", pickRound: "Breakthrough", allPicks: "All",
     fateSect: "Fate sect", career: "Career", character: "Character", sortby: "Sort by",
     minoffers: "Min offers", search: "Search", nomatch: "No fates match these filters.",
@@ -20,7 +20,7 @@ const UI = {
   zh: {
     xyTitle: "天衍选择统计",
     xySubPre: "天衍万象 · 4选1 ·", xySubMid: "次出现 ·", xySubPost: "个仙命",
-    navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
+    navHome: "首页", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
     tier: "道心段位", language: "语言", pickRound: "突破", allPicks: "全部",
     fateSect: "门派", career: "副职", character: "角色", sortby: "排序",
     minoffers: "最少出现", search: "搜索", nomatch: "没有符合条件的仙命。",

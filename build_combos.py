@@ -25,7 +25,7 @@ import zstandard
 
 import cardnames
 
-FIRST, LAST, STEP = 30210000, 30747000, 1000
+FIRST, LAST, STEP = 30210000, 30869000, 1000
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
@@ -41,6 +41,11 @@ MIN_SUP = {2: 30, 3: 150, 4: 120, 5: 90, 6: 60}  # global support (full season)
 # don't ship dim-rows below this many games (keeps the file lean)
 MIN_ROW = {2: 6, 3: 4, 4: 3, 5: 3, 6: 3}
 FREQ_CAP = 45000  # auto-raise support if a size exceeds this many frequent combos
+# cap emitted rows per size, keeping the highest-game (most-played, most reliable)
+# combos. MIN_ROW alone can't bound the file as the season grows — the bloat is
+# combo *breadth*, not low-game noise — so this top-N keeps the shipped file lean
+# (~old footprint). Set a size to None to disable its cap.
+LEAN_CAP = {3: 130000, 4: 80000, 5: 42000, 6: 20000}
 PCHAR, PCAR = 32, 8  # dims: season, char, career (NO round for 3+ card combos)
 
 
@@ -225,16 +230,22 @@ def main():
 
     combos_arr = {}
     for k, dimc in out_combos.items():
-        arr = []
+        rows = []
         for (dim, combo), v in dimc.items():
             if v[1] < MIN_ROW[k]:
                 continue
             if any(c not in old_to_new for c in combo):
                 continue
             s, ch, car = unpack(dim)
-            arr.extend([s, ch, car])
-            arr.extend(sorted(old_to_new[c] for c in combo))
-            arr.extend([v[0], v[1], v[2], v[3]])
+            row = [s, ch, car, *sorted(old_to_new[c] for c in combo), v[0], v[1], v[2], v[3]]
+            rows.append((v[1], row))            # v[1] = games (for the lean cap)
+        cap = LEAN_CAP.get(k)
+        if cap and len(rows) > cap:             # keep the highest-game combos
+            rows.sort(key=lambda r: r[0], reverse=True)
+            rows = rows[:cap]
+        arr = []
+        for _, row in rows:
+            arr.extend(row)
         combos_arr[str(k)] = arr
 
     sing_arr = []
@@ -248,7 +259,7 @@ def main():
         "meta": {
             "seasons": SEASONS, "careers": sorted(careers_seen), "charIds": char_ids,
             "rounds": [1, 27], "sizes": list(range(2, MAX_K + 1)),
-            "minSup": MIN_SUP, "minRow": MIN_ROW,
+            "minSup": MIN_SUP, "minRow": MIN_ROW, "leanCap": LEAN_CAP,
             "population": {"t4000": pop4, "t6000": pop6},
             "singleStride": 9,  # s,ch,car,rd, fam, w,g,w6,g6
         },

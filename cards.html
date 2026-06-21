@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yi Xian Card Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html" data-i18n="navHome">Home</a>
+  <a href="cards.html" class="on" data-i18n="navCards">Cards</a>
+  <a href="deck.html" data-i18n="navDecks">Combos</a>
+  <a href="fate.html" data-i18n="navFate">Fate</a>
+  <a href="tianyan.html" data-i18n="navXY">Heavenly</a>
+</nav>
+<header>
+  <h1 data-i18n="title">Yi Xian Card Explorer</h1>
+  <p class="sub">
+    <span data-i18n="subPre">Win rate &amp; popularity from</span>
+    <span id="gamecount">…</span>
+    <span data-i18n="subMid">card-battles ·</span>
+    <span id="cardcount">…</span>
+    <span data-i18n="subPost">cards shown</span>
+  </p>
+</header>
+
+<div class="controls">
+  <div class="ctl">
+    <label data-i18n="tier">DaoXin tier</label>
+    <div class="seg" id="threshold">
+      <button data-v="4000" class="on">≥ 4000</button>
+      <button data-v="6000">≥ 6000</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <label data-i18n="language">Language</label>
+    <div class="seg" id="lang">
+      <button data-v="en">EN</button>
+      <button data-v="zh" class="on">中文</button>
+    </div>
+  </div>
+
+  <div class="ctl" id="career-ctl">
+    <label data-i18n="career">Career</label>
+    <div class="ms" data-ms="career"></div>
+  </div>
+  <div class="ctl" id="character-ctl">
+    <label data-i18n="character">Character</label>
+    <div class="ms" data-ms="character"></div>
+  </div>
+
+  <div class="ctl">
+    <label><span data-i18n="rounds">Rounds</span>: <span id="roundlbl">1–27</span></label>
+    <div class="dual" id="rounds">
+      <input type="range" id="rlo" min="1" max="27" value="1">
+      <input type="range" id="rhi" min="1" max="27" value="27">
+    </div>
+  </div>
+
+  <div class="ctl">
+    <label data-i18n="sortby">Sort by</label>
+    <select id="sort">
+      <option value="pop" data-i18n="popularity">Popularity</option>
+      <option value="wr" data-i18n="winrate">Win rate</option>
+      <option value="name" data-i18n="cardname">Name</option>
+    </select>
+  </div>
+  <div class="ctl">
+    <label><span data-i18n="mingames">Min games</span> <span id="minlbl">30</span></label>
+    <input type="range" id="mingames" min="0" max="1000" value="30" step="10">
+  </div>
+  <div class="ctl grow">
+    <label data-i18n="search">Search</label>
+    <input type="text" id="search" placeholder="…">
+  </div>
+</div>
+
+<main id="grid"></main>
+<div id="empty" class="empty" hidden data-i18n="nomatch">No cards match these filters.</div>
+
+<footer>
+  <span data-i18n="footData">Data:</span>
+  <a href="https://huggingface.co/datasets/sharpobject/yxp_replays">sharpobject/yxp_replays</a> ·
+  <span data-i18n="footArt">card art:</span>
+  <a href="https://sharpobject.github.io/yxp_wiki/">yxp_wiki</a>.
+  <span data-i18n="footNote">Win rate = round wins / rounds the card was on the player's board. Levels merged on tiles.</span>
+</footer>
+
+<!-- card detail modal -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-bg"></div>
+  <div class="modal-card">
+    <button class="close" id="modalClose">✕</button>
+    <div class="modal-head">
+      <img id="mImg" alt="">
+      <div>
+        <div class="mName" id="mName"></div>
+        <div class="mSect" id="mSect"></div>
+        <div class="mTot" id="mTot"></div>
+      </div>
+    </div>
+    <div class="modal-levels">
+      <span data-i18n="levels">Levels</span>:
+      <span id="mLevels" class="levelchips"></span>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title" data-i18n="wrByRound">Win rate by round</div>
+      <div id="chartWR" class="chart"></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title" data-i18n="popByRound">Popularity by round (games)</div>
+      <div id="chartPop" class="chart"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

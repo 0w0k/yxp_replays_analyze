@@ -6,13 +6,13 @@
 作为后续所有天衍 mapping 的唯一权威来源。
 
 天衍 = replay 里的 fateStrategyData.strategies（4 选 1，id 3/6/9）。
-命格 ID 与本文件的 byId 直接对应（ID 范围 1~353，共 350 个）。
+天衍 ID 与本文件的 byId 直接对应（ID 范围 1~353，共 350 个）。
 
 页面 DOM:
   <h2>门派 <span class="muted">(N)</span></h2>
   <article class="fate-card" id="fate-strategy-{ID}">
     <img src=".../Icon_FateStrategy_{ID}.png">
-    <h3>命格名</h3><span class="muted">ID {ID}</span>
+    <h3>天衍名</h3><span class="muted">ID {ID}</span>
     <div class="phase-strip"><span class="phase-chip">分类</span>
        <span class="phase-chip">权重 a / b / c</span> ...</div>
     <p>效果描述</p>

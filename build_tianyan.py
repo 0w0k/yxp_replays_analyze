@@ -3,16 +3,16 @@
 """天衍万象仙命(天衍)聚合 -> data/tianyan.json.
 
 天衍 = replay 的 privateData.fateStrategyData.strategies（4 选 1，strategy id
-3/6/9 = 第 1/2/3 次突破）。命格 ID 直接对应 data/fates_wiki.json 的 byId
+3/6/9 = 第 1/2/3 次突破）。天衍 ID 直接对应 data/fates_wiki.json 的 byId
 (由 build_tianyan_wiki.py 从 wiki 生成)。
 
 口径与 cards/fates/decks 页面一致：seasonMec==9（天衍万象本赛季），段位分
 beginRankScore>=4000（6000 为高分档），回合级胜率（winerId==uid 记为该回合胜）。
 
 两个指标：
-  * draft (选择率) -> 每个触发点 slot(id 3/6/9)每个命格 offered/picked
+  * draft (选择率) -> 每个触发点 slot(id 3/6/9)每个天衍 offered/picked
        keyed (season, char, career, slot, fateId) -> [off, pick, off6, pick6]
-  * held (持有胜率) -> 每回合 lastRoundData.fateStrategies 里持有的命格
+  * held (持有胜率) -> 每回合 lastRoundData.fateStrategies 里持有的天衍
        keyed (season, char, career, round, fateId) -> [w, g, w6, g6]
 """
 import io
@@ -29,7 +29,7 @@ BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main
 # 天衍(fateStrategyData)随客户端 version 001.0007.0002 才上线：30210000~3052xxxx
 # (ver 0000/0001) 完全没有该字段，只有 ~30530000 起(ver 0002/0003)才有数据。
 # 起点设 30520000 保证不漏(前 1~2 个空包成本极小)。
-FIRST, LAST, STEP = 30520000, 30747000, 1000          # 含天衍数据的 season-9 包范围
+FIRST, LAST, STEP = 30520000, 30869000, 1000          # 含天衍数据的 season-9 包范围
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -127,7 +127,7 @@ def main():
                 last_priv = rd[side]["privateData"]
                 win = 1 if rd.get("winerId") == uid else 0
                 rn = rd.get("round", 0)
-                # held: 截至该回合持有的天衍命格
+                # held: 截至该回合持有的天衍天衍
                 lrd = pub.get("lastRoundData") or {}
                 for fid in {x for x in (lrd.get("fateStrategies") or []) if x}:
                     v = held[(s, ch, car, rn, fid)]

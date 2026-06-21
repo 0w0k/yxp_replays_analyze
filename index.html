@@ -1,119 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yi Xian Card Explorer</title>
-<link rel="stylesheet" href="style.css">
+<title>弈仙牌 · 天衍万象数据站</title>
+<link rel="stylesheet" href="style.css?v=20260621e">
 </head>
-<body>
-<nav class="topnav">
-  <a href="index.html" class="on" data-i18n="navCards">Cards</a>
+<body class="home">
+<nav class="topnav home-nav">
+  <a href="index.html" class="on" data-i18n="navHome">Home</a>
+  <a href="cards.html" data-i18n="navCards">Cards</a>
   <a href="deck.html" data-i18n="navDecks">Combos</a>
   <a href="fate.html" data-i18n="navFate">Fate</a>
   <a href="tianyan.html" data-i18n="navXY">Heavenly</a>
 </nav>
-<header>
-  <h1 data-i18n="title">Yi Xian Card Explorer</h1>
-  <p class="sub">
-    <span data-i18n="subPre">Win rate &amp; popularity from</span>
-    <span id="gamecount">…</span>
-    <span data-i18n="subMid">card-battles ·</span>
-    <span id="cardcount">…</span>
-    <span data-i18n="subPost">cards shown</span>
-  </p>
-</header>
 
-<div class="controls">
-  <div class="ctl">
-    <label data-i18n="tier">DaoXin tier</label>
-    <div class="seg" id="threshold">
-      <button data-v="4000" class="on">≥ 4000</button>
-      <button data-v="6000">≥ 6000</button>
-    </div>
+<header class="hero">
+  <div class="hero-inner">
+    <span class="hero-badge" data-i18n="heroBadge">天衍万象 · 当前赛季</span>
+    <h1 class="hero-title" data-i18n="heroTitle">弈仙牌 · 天衍万象数据站</h1>
+    <p class="hero-sub" data-i18n="heroTagline">用真实天梯对局，告诉你这赛季什么强。</p>
   </div>
-  <div class="ctl">
-    <label data-i18n="language">Language</label>
+  <div class="hero-side">
+    <div class="hero-pills">
+      <span class="pill pill-season"><i></i><span data-i18n="seasonPill">赛季 · 天衍万象</span></span>
+      <span class="pill pill-live"><b></b><span id="updatedPill" data-i18n="heroLoading">加载中…</span></span>
+    </div>
     <div class="seg" id="lang">
       <button data-v="en">EN</button>
       <button data-v="zh" class="on">中文</button>
     </div>
   </div>
+</header>
 
-  <div class="ctl" id="career-ctl">
-    <label data-i18n="career">Career</label>
-    <div class="ms" data-ms="career"></div>
+<section class="kpi-row" aria-label="overview">
+  <div class="kpi k-games">
+    <div class="kpi-label" data-i18n="kpiGames">分析对局</div>
+    <div class="kpi-num" id="kpi-games">—</div>
+    <div class="kpi-sub" data-i18n="kpiGamesSub">道心 ≥ 4000 天梯</div>
   </div>
-  <div class="ctl" id="character-ctl">
-    <label data-i18n="character">Character</label>
-    <div class="ms" data-ms="character"></div>
+  <div class="kpi k-tianyan">
+    <div class="kpi-label" data-i18n="kpiTianyan">天衍样本</div>
+    <div class="kpi-num" id="kpi-tianyan">—</div>
+    <div class="kpi-sub" data-i18n="kpiTianyanSub">含 fateStrategyData 的对局</div>
   </div>
+  <div class="kpi k-cards">
+    <div class="kpi-label" data-i18n="kpiCards">覆盖卡牌</div>
+    <div class="kpi-num" id="kpi-cards">—</div>
+    <div class="kpi-sub" data-i18n="kpiCardsSub">本赛季出场过的卡牌</div>
+  </div>
+  <div class="kpi k-fates">
+    <div class="kpi-label" data-i18n="kpiFates">命格库</div>
+    <div class="kpi-num" id="kpi-fates">—</div>
+    <div class="kpi-sub" data-i18n="kpiFatesSub">五大门派天衍命格</div>
+  </div>
+</section>
 
-  <div class="ctl">
-    <label><span data-i18n="rounds">Rounds</span>: <span id="roundlbl">1–27</span></label>
-    <div class="dual" id="rounds">
-      <input type="range" id="rlo" min="1" max="27" value="1">
-      <input type="range" id="rhi" min="1" max="27" value="27">
+<main class="home-grid">
+  <a class="home-card c-cards" href="cards.html">
+    <div class="hc-head">
+      <span class="hc-no">01</span>
+      <div class="hc-htext">
+        <div class="hc-title" data-i18n="cardCardsTitle">卡牌 · 出场 × 胜率</div>
+        <div class="hc-sub" data-i18n="cardCardsMetric">x=出场量　y=胜率　· 中位线四象限 · 点按门派着色</div>
+      </div>
+      <span class="hc-go" data-i18n="enterCards">进入卡牌页 →</span>
     </div>
-  </div>
+    <div class="hc-legend" id="legend-cards"></div>
+    <div class="hc-chart"><canvas id="chartCards"></canvas></div>
+    <div class="hc-foot"><div class="hc-stat" id="stat-cards"></div></div>
+  </a>
 
-  <div class="ctl">
-    <label data-i18n="sortby">Sort by</label>
-    <select id="sort">
-      <option value="pop" data-i18n="popularity">Popularity</option>
-      <option value="wr" data-i18n="winrate">Win rate</option>
-      <option value="name" data-i18n="cardname">Name</option>
-    </select>
-  </div>
-  <div class="ctl">
-    <label><span data-i18n="mingames">Min games</span> <span id="minlbl">30</span></label>
-    <input type="range" id="mingames" min="0" max="1000" value="30" step="10">
-  </div>
-  <div class="ctl grow">
-    <label data-i18n="search">Search</label>
-    <input type="text" id="search" placeholder="…">
-  </div>
-</div>
+  <a class="home-card c-combos" href="deck.html">
+    <div class="hc-head">
+      <span class="hc-no">02</span>
+      <div class="hc-htext">
+        <div class="hc-title" data-i18n="cardCombosTitle">卡组 · 最强连招</div>
+        <div class="hc-sub" data-i18n="cardCombosMetric">lift = 双卡胜率 − 两卡单卡胜率均值 · Top 8</div>
+      </div>
+      <span class="hc-go" data-i18n="enterCombos">进入卡组页 →</span>
+    </div>
+    <div class="hc-chart"><canvas id="chartCombos"></canvas></div>
+    <div class="hc-foot"><div class="hc-stat" id="stat-combos"></div></div>
+  </a>
 
-<main id="grid"></main>
-<div id="empty" class="empty" hidden data-i18n="nomatch">No cards match these filters.</div>
+  <a class="home-card c-fate" href="fate.html">
+    <div class="hc-head">
+      <span class="hc-no">03</span>
+      <div class="hc-htext">
+        <div class="hc-title" data-i18n="cardFatesTitle">仙命 · 高价值天赋</div>
+        <div class="hc-sub" data-i18n="cardFatesMetric">持有该天赋时的回合胜率 · 大样本 Top 8</div>
+      </div>
+      <span class="hc-go" data-i18n="enterFates">进入仙命页 →</span>
+    </div>
+    <div class="hc-chart"><canvas id="chartFates"></canvas></div>
+    <div class="hc-foot"><div class="hc-stat" id="stat-fates"></div></div>
+  </a>
+
+  <a class="home-card c-tianyan" href="tianyan.html">
+    <div class="hc-head">
+      <span class="hc-no">04</span>
+      <div class="hc-htext">
+        <div class="hc-title" data-i18n="cardTyTitle">天衍 · 门派选取占比</div>
+        <div class="hc-sub" data-i18n="cardTyMetric">三次突破 4 选 1 · 各门派命格被选取份额</div>
+      </div>
+      <span class="hc-go" data-i18n="enterTy">进入天衍页 →</span>
+    </div>
+    <div class="hc-chart"><canvas id="chartTianyan"></canvas></div>
+    <div class="hc-foot"><div class="hc-stat" id="stat-tianyan"></div></div>
+  </a>
+</main>
 
 <footer>
   <span data-i18n="footData">Data:</span>
   <a href="https://huggingface.co/datasets/sharpobject/yxp_replays">sharpobject/yxp_replays</a> ·
   <span data-i18n="footArt">card art:</span>
   <a href="https://sharpobject.github.io/yxp_wiki/">yxp_wiki</a>.
-  <span data-i18n="footNote">Win rate = round wins / rounds the card was on the player's board. Levels merged on tiles.</span>
 </footer>
 
-<!-- card detail modal -->
-<div id="modal" class="modal" hidden>
-  <div class="modal-bg"></div>
-  <div class="modal-card">
-    <button class="close" id="modalClose">✕</button>
-    <div class="modal-head">
-      <img id="mImg" alt="">
-      <div>
-        <div class="mName" id="mName"></div>
-        <div class="mSect" id="mSect"></div>
-        <div class="mTot" id="mTot"></div>
-      </div>
-    </div>
-    <div class="modal-levels">
-      <span data-i18n="levels">Levels</span>:
-      <span id="mLevels" class="levelchips"></span>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title" data-i18n="wrByRound">Win rate by round</div>
-      <div id="chartWR" class="chart"></div>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title" data-i18n="popByRound">Popularity by round (games)</div>
-      <div id="chartPop" class="chart"></div>
-    </div>
-  </div>
-</div>
-
-<script src="app.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="home.js?v=20260621e"></script>
 </body>
 </html>

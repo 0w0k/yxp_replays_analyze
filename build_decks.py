@@ -28,7 +28,7 @@ import zstandard
 
 BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main"
 # Season 9 = 天衍万象 (current). Local clone archives in this range are seasonMec 9.
-FIRST, LAST, STEP = 30210000, 30747000, 1000
+FIRST, LAST, STEP = 30210000, 30869000, 1000
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
