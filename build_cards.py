@@ -25,6 +25,13 @@ import cardnames
 
 BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main"
 FIRST, LAST, STEP = 30210000, 30869000, 1000
+# Optional per-version build overrides (defaults keep the original behaviour):
+#   BUILD_FIRST/BUILD_LAST -> archive range; VERSION_FILTER -> require d["version"];
+#   OUT_DIR -> output dir (e.g. "data/v175"). REF_CARDS stays the canonical data/.
+FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
+LAST = int(os.environ.get("BUILD_LAST", LAST))
+VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
+OUT_DIR = os.environ.get("OUT_DIR") or "data"
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,8 +39,9 @@ REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\repla
 CACHE = os.environ.get("DECK_CACHE") or os.path.join(
     os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
-OUT4 = os.path.join(HERE, "data", "data_4000.json")
-OUT6 = os.path.join(HERE, "data", "data_6000.json")
+OUT4 = os.path.join(HERE, OUT_DIR, "data_4000.json")
+OUT6 = os.path.join(HERE, OUT_DIR, "data_6000.json")
+os.makedirs(os.path.join(HERE, OUT_DIR), exist_ok=True)
 
 SEASONS = [9]
 SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
@@ -99,6 +107,8 @@ def main():
     for ai, name in enumerate(ARCHIVES):
         for d in iter_replays(src(name)):
             if d.get("seasonMec") not in SEASON_IDX:
+                continue
+            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
                 continue
             score = d.get("beginRankScore", 0)
             if score < MIN_SCORE:

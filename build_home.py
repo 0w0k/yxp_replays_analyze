@@ -15,8 +15,13 @@ import os
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-D = os.path.join(HERE, "data")
-OUT = os.path.join(D, "home.json")
+# IN_DIR = 业务数据来源(可指向 data/v175 做按版本汇总)，STATIC = 版本无关的静态文件
+# (fates_wiki.json 永远从 data/ 读)，OUT_DIR = 输出目录。默认全为 data/，行为不变。
+IN_DIR = os.path.join(HERE, os.environ.get("IN_DIR") or "data")
+STATIC = os.path.join(HERE, "data")
+OUT_DIR = os.path.join(HERE, os.environ.get("OUT_DIR") or "data")
+D = IN_DIR
+OUT = os.path.join(OUT_DIR, "home.json")
 TOPN = 5            # 数据亮点 chip 取 top1，天衍 top5
 TOP_CARDS = 40      # 卡牌散点图的点数
 TOP_BARS = 8        # 条形图(卡组/仙命)的条数
@@ -28,6 +33,11 @@ SECT_CN = {"sw": "云灵剑宗", "he": "七星阁", "fe": "五行道盟", "dx": 
 
 def load(name):
     return json.load(open(os.path.join(D, name), encoding="utf-8"))
+
+
+def load_static(name):
+    # 版本无关的静态文件(如 fates_wiki.json)始终从 data/ 读
+    return json.load(open(os.path.join(STATIC, name), encoding="utf-8"))
 
 
 def top_cards():
@@ -112,7 +122,7 @@ def top_fates():
 
 def top_tianyan():
     j = load("tianyan.json")
-    W = load("fates_wiki.json")["byId"]
+    W = load_static("fates_wiki.json")["byId"]
     A, st = j["draft"], j["meta"]["draftStride"]      # stride 9
     off, pick = defaultdict(float), defaultdict(float)
     for i in range(0, len(A), st):
@@ -143,7 +153,7 @@ def main():
     combos = top_combos()
     fates = top_fates()
     tianyan, tpop = top_tianyan()
-    nfates = len(load("fates_wiki.json").get("byId", {}))   # 命格库规模(350)
+    nfates = len(load_static("fates_wiki.json").get("byId", {}))   # 命格库规模(350)
     out = {
         "meta": {
             "season": "天衍万象",
@@ -157,6 +167,7 @@ def main():
         },
         "cards": cards, "combos": combos, "fates": fates, "tianyan": tianyan,
     }
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
     print("wrote", OUT, os.path.getsize(OUT), "bytes")

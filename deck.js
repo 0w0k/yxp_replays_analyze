@@ -7,6 +7,7 @@ const UI = {
     deckTitle: "Yi Xian Combo Explorer",
     deckSubPre: "Card-pair synergy from", deckSubMid: "ranked games ·",
     deckSubPost: "combos shown", navHome: "Home", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
+    version: "Version", verLatest: "Latest 1.7.5", verPrev: "Earlier",
     tier: "DaoXin tier", language: "Language", season: "Season", career: "Career",
     character: "Character", rounds: "Rounds", sortby: "Sort by",
     sortLift: "Synergy (lift)", winrate: "Win rate", games: "Games", comboSize: "Cards",
@@ -23,6 +24,7 @@ const UI = {
     deckTitle: "弈仙牌 卡组组合分析",
     deckSubPre: "卡牌组合协同，数据来自", deckSubMid: "次排位对局 ·",
     deckSubPost: "个组合", navHome: "首页", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
+    version: "版本", verLatest: "最新 1.7.5", verPrev: "之前版本",
     tier: "道心段位", language: "语言", season: "赛季", career: "副职",
     character: "角色", rounds: "回合", sortby: "排序",
     sortLift: "协同提升", winrate: "胜率", games: "场次", comboSize: "组合大小",
@@ -56,7 +58,7 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 // ---- state -----------------------------------------------------------------
 const S = {
-  th: 4000, lang: "zh", size: 2,
+  th: 4000, lang: "zh", version: "v175", size: 2,
   seasons: new Set(), careers: new Set(), chars: new Set(),
   rlo: 1, rhi: 27, sort: "lift", minGames: 50, q: "",
   combo: null, // selected combo's fam indices (into the active card list)
@@ -66,11 +68,19 @@ let NAMES = null, DECK = null, CMB = null, NCARD = 0;
 const $ = (s) => document.querySelector(s);
 let raf = 0;
 const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
+// business data dir per selected version ("v175" -> data/v175, "prev" -> data)
+const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
 // ---- load ------------------------------------------------------------------
 async function boot() {
   NAMES = await fetch("data/names.json").then((r) => r.json());
-  DECK = await fetch("data/decks.json").then((r) => r.json());
+  wireStatic();
+  await loadVersion();
+}
+async function loadVersion() {
+  DECK = await fetch(`${dataBase()}/decks.json`).then((r) => r.json());
+  CMB = null;            // combos re-fetched per version on demand
+  S.combo = null; closeModal();
   NCARD = DECK.cards.length;
   const m = DECK.meta;
   S.seasons = new Set(m.seasons.map((_, i) => i));
@@ -78,7 +88,8 @@ async function boot() {
   S.chars = new Set(m.charIds);
   S.rlo = m.rounds[0]; S.rhi = m.rounds[1];
   buildCareer(); buildCharacter(); buildRoundSlider();
-  wireStatic(); setSizeUI(); applyLang(); render();
+  if (S.size >= 3) CMB = await fetch(`${dataBase()}/combos.json`).then((r) => r.json()).catch(() => null);
+  setSizeUI(); applyLang(); render();
 }
 // the active data source depends on the selected combo size
 function activeCards() { return S.size === 2 ? DECK.cards : CMB.cards; }
@@ -508,12 +519,13 @@ function setSizeUI() {
 }
 function wireStatic() {
   seg("threshold", (v) => { S.th = +v; schedule(); if (S.combo) renderModal(); });
+  seg("version", (v) => { S.version = v; loadVersion(); });
   seg("lang", (v) => { S.lang = v; applyLang(); });
   seg("size", async (v) => {
     S.size = +v; closeModal(); setSizeUI();
     if (S.size >= 3 && !CMB) {          // lazy-load the multi-card data on demand
       $("#grid").innerHTML = `<div class="empty">…</div>`;
-      CMB = await fetch("data/combos.json").then((r) => r.json()).catch(() => null);
+      CMB = await fetch(`${dataBase()}/combos.json`).then((r) => r.json()).catch(() => null);
     }
     render();
   });

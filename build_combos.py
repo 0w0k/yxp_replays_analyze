@@ -26,10 +26,15 @@ import zstandard
 import cardnames
 
 FIRST, LAST, STEP = 30210000, 30869000, 1000
+# Optional per-version build overrides (defaults keep the original behaviour).
+FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
+LAST = int(os.environ.get("BUILD_LAST", LAST))
+VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
+OUT_DIR = os.environ.get("OUT_DIR") or "data"
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
-OUT = os.path.join(HERE, "data", "combos.json")
+OUT = os.path.join(HERE, OUT_DIR, "combos.json")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
 
 SEASONS = [9]
@@ -100,6 +105,8 @@ def main():
             continue
         for d in iter_replays(path):
             if d.get("seasonMec") not in SEASON_IDX:
+                continue
+            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
                 continue
             score = d.get("beginRankScore", 0)
             if score < MIN_SCORE:
@@ -267,6 +274,7 @@ def main():
         "singles": sing_arr,
         "combos": combos_arr,
     }
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     sz = os.path.getsize(OUT) / 1e6

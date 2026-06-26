@@ -14,6 +14,7 @@ const UI = {
     footData: "Data:", footArt: "card art:",
     footNote: "Win rate = round wins / rounds the card was on the player's board. Levels merged on tiles.",
     levels: "Levels", wrByRound: "Win rate by round", popByRound: "Popularity by round (games)",
+    version: "Version", verLatest: "Latest 1.7.5", verPrev: "Earlier",
     all: "All", none: "None", allSel: "All", nSel: "selected", searchPh: "card name…",
     sect: "Sect", baseLevel: "base", overall: "overall",
     notEnough: "Not enough data to calculate win rate at this Min games.",
@@ -27,6 +28,7 @@ const UI = {
     footData: "数据：", footArt: "卡图：",
     footNote: "胜率 = 该回合胜场 / 该卡在场上的回合数。卡面已合并等级。",
     levels: "等级", wrByRound: "各回合胜率", popByRound: "各回合使用次数",
+    version: "版本", verLatest: "最新 1.7.5", verPrev: "之前版本",
     all: "全部", none: "清空", allSel: "全部", nSel: "项已选", searchPh: "卡牌名称…",
     sect: "门派", baseLevel: "基础", overall: "总体",
     notEnough: "当前最少场次下数据不足，无法计算胜率。",
@@ -57,11 +59,13 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 // ---- state -----------------------------------------------------------------
 const S = {
-  th: 4000, lang: "zh",
+  th: 4000, lang: "zh", version: "v175",
   seasons: new Set(), careers: new Set(), chars: new Set(),
   rlo: 1, rhi: 27, sort: "pop", minGames: 30, q: "",
   modalFam: null, modalLevels: new Set(),
 };
+// business data dir per selected version ("v175" -> data/v175, "prev" -> data)
+const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 const cache = {};
 let NAMES = null, DATA = null;
 const $ = (s) => document.querySelector(s);
@@ -76,8 +80,9 @@ async function boot() {
 }
 async function loadThreshold(th) {
   S.th = th;
-  if (!cache[th]) cache[th] = await fetch(`data/data_${th}.json`).then((r) => r.json());
-  DATA = cache[th];
+  const key = `${S.version}:${th}`;
+  if (!cache[key]) cache[key] = await fetch(`${dataBase()}/data_${th}.json`).then((r) => r.json());
+  DATA = cache[key];
   const m = DATA.meta;
   // default selections = everything
   S.seasons = new Set(m.seasons.map((_, i) => i));
@@ -425,6 +430,7 @@ function seg(id, fn) {
 }
 function wireStatic() {
   seg("threshold", (v) => loadThreshold(+v));
+  seg("version", (v) => { S.version = v; loadThreshold(S.th); });
   seg("lang", (v) => { S.lang = v; applyLang(); });
   $("#sort").addEventListener("change", (e) => { S.sort = e.target.value; render(); });
   $("#mingames").addEventListener("input", (e) => {

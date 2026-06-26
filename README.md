@@ -47,6 +47,30 @@ python build_tianyan.py      # Heavenly Derivation picks -> data/tianyan.json
 python build_home.py         # landing digest           -> data/home.json   (run last)
 ```
 
+### Per-version data (the Version dropdown)
+
+The four tool pages (cards / deck / fate / tianyan) carry a **Version** dropdown — *Latest
+1.7.5* (default) vs *Earlier* (the frozen full `data/*.json`). Each replay carries a
+`version` field: `001.0007.0005` = 1.7.5, `…0004` = 1.7.4, etc. The latest-version dataset
+lives in `data/v175/` and is rebuilt by re-running the same builders with three optional
+env vars (unset = original full-season behaviour):
+
+- `BUILD_FIRST` / `BUILD_LAST` — archive range to scan
+- `VERSION_FILTER` — keep only games whose `version` equals this
+- `OUT_DIR` — output dir (e.g. `data/v175`); `data/data_4000.json` stays the canonical name source
+
+```sh
+# rebuild the 1.7.5 (data/v175) bundle the four pages use as "Latest"
+export BUILD_FIRST=31000000 BUILD_LAST=31069000 VERSION_FILTER=001.0007.0005 OUT_DIR=data/v175
+python build_cards.py && python build_decks.py && python build_combos.py \
+  && python build_fates.py && python build_tianyan.py
+IN_DIR=data/v175 OUT_DIR=data/v175 python build_home.py   # home reads data/v175/home.json
+```
+
+`fates_wiki.json` / `names.json` are version-independent and always read from `data/`.
+The landing page (`index.html`) always shows the latest version (`data/v175/home.json`); the
+*Earlier* option reuses the existing frozen `data/*.json` and needs no rebuild.
+
 `build_combos.py` mines 3-6 card combos with Apriori. Because combo *breadth* grows fast as the
 season's data accumulates, a per-size `LEAN_CAP` keeps only the highest-game (most-played, most
 reliable) combos so the shipped `data/combos.json` stays lean (~10 MB) instead of ballooning to 40 MB+.

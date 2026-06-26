@@ -8,6 +8,7 @@ const UI = {
     fateTitle: "Yi Xian Talent / Dao-Yun Explorer",
     fateSubPre: "Tian Yan Wan Xiang ·", fateSubMid: "ranked games ·", fateSubPost: "shown",
     navHome: "Home", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
+    version: "Version", verLatest: "Latest 1.7.5", verPrev: "Earlier",
     tier: "DaoXin tier", language: "Language", system: "System", metric: "Metric",
     talent: "Talent", daoyun: "Dao-Yun", mHeld: "Held win rate", mDraft: "Draft",
     career: "Career", character: "Character", rounds: "Rounds", sortby: "Sort by",
@@ -25,6 +26,7 @@ const UI = {
     fateTitle: "弈仙牌 天赋 / 道韵分析",
     fateSubPre: "天衍万象 ·", fateSubMid: "次排位对局 ·", fateSubPost: "项",
     navHome: "首页", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
+    version: "版本", verLatest: "最新 1.7.5", verPrev: "之前版本",
     tier: "道心段位", language: "语言", system: "系统", metric: "指标",
     talent: "天赋", daoyun: "道韵", mHeld: "持有胜率", mDraft: "选秀",
     career: "副职", character: "角色", rounds: "回合", sortby: "排序",
@@ -43,7 +45,7 @@ const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 // ---- state -----------------------------------------------------------------
 const S = {
-  th: 4000, lang: "zh", sys: "tal", metric: "held",
+  th: 4000, lang: "zh", version: "v175", sys: "tal", metric: "held",
   careers: new Set(), chars: new Set(),
   rlo: 1, rhi: 27, sort: "wr", minGames: 50, q: "", detail: null,
 };
@@ -51,17 +53,24 @@ let NAMES = null, F = null;
 const $ = (s) => document.querySelector(s);
 let raf = 0;
 const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
+// business data dir per selected version ("v175" -> data/v175, "prev" -> data)
+const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
 // ---- load ------------------------------------------------------------------
 async function boot() {
   NAMES = await fetch("data/names.json").then((r) => r.json());
-  F = await fetch("data/fates.json").then((r) => r.json());
+  wireStatic();
+  await loadVersion();
+}
+async function loadVersion() {
+  closeModal();
+  F = await fetch(`${dataBase()}/fates.json`).then((r) => r.json());
   const m = F.meta;
   S.careers = new Set(m.careers);
   S.chars = new Set(m.charIds);
   S.rlo = m.rounds[0]; S.rhi = m.rounds[1];
   buildCareer(); buildCharacter(); buildRoundSlider();
-  wireStatic(); applyLang(); render();
+  applyLang(); render();
 }
 
 // ---- multiselect (shared pattern) ------------------------------------------
@@ -391,6 +400,7 @@ function setMetricUI() {
 }
 function wireStatic() {
   seg("threshold", (v) => { S.th = +v; schedule(); if (S.detail != null) renderModal(); });
+  seg("version", (v) => { S.version = v; loadVersion(); });
   seg("lang", (v) => { S.lang = v; applyLang(); });
   seg("system", (v) => { S.sys = v; closeModal(); render(); });
   seg("metric", (v) => { S.metric = v; setMetricUI(); render(); });

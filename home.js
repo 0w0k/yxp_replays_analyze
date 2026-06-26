@@ -95,7 +95,7 @@ async function boot() {
   Chart.defaults.color = C.muted;
   Chart.defaults.font.family = "system-ui,-apple-system,Segoe UI,Roboto,'Microsoft YaHei',sans-serif";
   Chart.defaults.font.size = 11;
-  try { H = await fetch("data/home.json").then((r) => r.json()); } catch (e) { H = null; }
+  try { H = await fetch("data/v175/home.json").then((r) => r.json()); } catch (e) { H = null; }
   applyLang(); renderAll();
 }
 

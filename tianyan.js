@@ -8,6 +8,7 @@ const UI = {
     xyTitle: "Heavenly Derivation — fate picks",
     xySubPre: "Tian Yan Wan Xiang · 4-pick ·", xySubMid: "offers ·", xySubPost: "fates",
     navHome: "Home", navCards: "Cards", navDecks: "Combos", navFate: "Fate", navXY: "Heavenly",
+    version: "Version", verLatest: "Latest 1.7.5", verPrev: "Earlier",
     tier: "DaoXin tier", language: "Language", pickRound: "Breakthrough", allPicks: "All",
     fateSect: "Fate sect", career: "Career", character: "Character", sortby: "Sort by",
     minoffers: "Min offers", search: "Search", nomatch: "No fates match these filters.",
@@ -21,6 +22,7 @@ const UI = {
     xyTitle: "天衍选择统计",
     xySubPre: "天衍万象 · 4选1 ·", xySubMid: "次出现 ·", xySubPost: "个仙命",
     navHome: "首页", navCards: "卡牌", navDecks: "卡组", navFate: "仙命", navXY: "天衍",
+    version: "版本", verLatest: "最新 1.7.5", verPrev: "之前版本",
     tier: "道心段位", language: "语言", pickRound: "突破", allPicks: "全部",
     fateSect: "门派", career: "副职", character: "角色", sortby: "排序",
     minoffers: "最少出现", search: "搜索", nomatch: "没有符合条件的仙命。",
@@ -34,7 +36,7 @@ const UI = {
 const t = (k) => (UI[S.lang][k] ?? UI.en[k] ?? k);
 
 const S = {
-  th: 4000, lang: "zh", slot: -1,
+  th: 4000, lang: "zh", version: "v175", slot: -1,
   careers: new Set(), chars: new Set(), fatesects: new Set(),
   sort: "pr", minGames: 30, q: "",
 };
@@ -42,20 +44,28 @@ let NAMES = null, F = null, W = null, ICON = "", SECT_OF = null, MAXID = 0;
 const $ = (s) => document.querySelector(s);
 let raf = 0;
 const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
+// business data dir per selected version ("v175" -> data/v175, "prev" -> data)
+const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
 async function boot() {
-  [NAMES, F, W] = await Promise.all([
+  // fates_wiki.json is version-independent (always from data/)
+  [NAMES, W] = await Promise.all([
     fetch("data/names.json").then((r) => r.json()),
-    fetch("data/tianyan.json").then((r) => r.json()),
     fetch("data/fates_wiki.json").then((r) => r.json()),
   ]);
   ICON = W._meta.iconBase;
   SECT_OF = {};                                   // fateId -> sect name
   for (const k in W.byId) { SECT_OF[+k] = W.byId[k].sect; if (+k > MAXID) MAXID = +k; }
+  S.fatesects = new Set(W.sects.map((s) => s.name));
+  buildFateSect();
+  wireStatic();
+  await loadVersion();
+}
+async function loadVersion() {
+  F = await fetch(`${dataBase()}/tianyan.json`).then((r) => r.json());
   S.careers = new Set(F.meta.careers);
   S.chars = new Set(F.meta.charIds);
-  S.fatesects = new Set(W.sects.map((s) => s.name));
-  buildFateSect(); buildCareer(); buildCharacter(); wireStatic(); applyLang(); render();
+  buildCareer(); buildCharacter(); applyLang(); render();
 }
 
 // ---- multiselect (shared pattern) ------------------------------------------
@@ -263,6 +273,7 @@ function seg(id, fn) {
 }
 function wireStatic() {
   seg("threshold", (v) => { S.th = +v; schedule(); });
+  seg("version", (v) => { S.version = v; loadVersion(); });
   seg("lang", (v) => { S.lang = v; applyLang(); });
   seg("slot", (v) => { S.slot = +v; render(); });
   $("#sort").addEventListener("change", (e) => { S.sort = e.target.value; render(); });

@@ -30,13 +30,18 @@ BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main
 # (ver 0000/0001) 完全没有该字段，只有 ~30530000 起(ver 0002/0003)才有数据。
 # 起点设 30520000 保证不漏(前 1~2 个空包成本极小)。
 FIRST, LAST, STEP = 30520000, 30869000, 1000          # 含天衍数据的 season-9 包范围
+# 可选的按版本构建覆盖（不设则保持原行为）。
+FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
+LAST = int(os.environ.get("BUILD_LAST", LAST))
+VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
+OUT_DIR = os.environ.get("OUT_DIR") or "data"
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
 CACHE = os.environ.get("DECK_CACHE") or os.path.join(
     os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
-OUT = os.path.join(HERE, "data", "tianyan.json")
+OUT = os.path.join(HERE, OUT_DIR, "tianyan.json")
 
 SEASONS = [9]
 SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
@@ -102,6 +107,8 @@ def main():
             continue
         for d in iter_replays(path):
             if d.get("seasonMec") not in SEASON_IDX:
+                continue
+            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
                 continue
             score = d.get("beginRankScore", 0)
             if score < MIN_SCORE:
