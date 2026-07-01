@@ -13,12 +13,11 @@ import json
 import os
 
 import cardnames
+from replay_utils import fam as famof, HERE
 
-HERE = os.path.dirname(os.path.abspath(__file__))
 REF = os.path.join(HERE, "data", "data_4000.json")
 COUNTER = r"D:\Coding\yixian-card-counter-with-proxy\proxy"
 resolve = cardnames.load_resolver(REF)
-famof = cardnames.fam
 
 
 def fix_card_array(path):

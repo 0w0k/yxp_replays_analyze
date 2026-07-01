@@ -15,89 +15,34 @@ beginRankScore>=4000（6000 为高分档），回合级胜率（winerId==uid 记
   * held (持有胜率) -> 每回合 lastRoundData.fateStrategies 里持有的天衍
        keyed (season, char, career, round, fateId) -> [w, g, w6, g6]
 """
-import io
-import json
 import os
-import tarfile
 import time
-import urllib.request
 from collections import defaultdict
 
-import zstandard
+from replay_utils import (
+    HERE, build_archives, build_env, download,
+    home_side, is_valid_game, iter_replays, season_index,
+    write_json, AutoIndex,
+)
 
-BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main"
-# 天衍(fateStrategyData)随客户端 version 001.0007.0002 才上线：30210000~3052xxxx
-# (ver 0000/0001) 完全没有该字段，只有 ~30530000 起(ver 0002/0003)才有数据。
-# 起点设 30520000 保证不漏(前 1~2 个空包成本极小)。
-FIRST, LAST, STEP = 30520000, 30869000, 1000          # 含天衍数据的 season-9 包范围
-# 可选的按版本构建覆盖（不设则保持原行为）。
-FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
-LAST = int(os.environ.get("BUILD_LAST", LAST))
-VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
-OUT_DIR = os.environ.get("OUT_DIR") or "data"
-ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
-CACHE = os.environ.get("DECK_CACHE") or os.path.join(
-    os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
+FIRST, LAST, ARCHIVES = build_archives(30520000, 30869000)
+VERSION_FILTER, OUT_DIR = build_env()
 OUT = os.path.join(HERE, OUT_DIR, "tianyan.json")
 
 SEASONS = [9]
-SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
+SEASON_IDX = season_index(SEASONS)
 MIN_SCORE, HI_SCORE = 4000, 6000
 SLOT_OF = {3: 0, 6: 1, 9: 2}          # strategy id -> 第几次突破
 MIN_HELD, MIN_DRAFT = 8, 8
 
 
-def download(name):
-    local = os.path.join(REPLAYS, name + ".tar.zst")
-    if os.path.exists(local) and os.path.getsize(local) > 1_000_000:
-        return local
-    dst = os.path.join(CACHE, name + ".tar.zst")
-    if os.path.exists(dst) and os.path.getsize(dst) > 1_000_000:
-        return dst
-    os.makedirs(CACHE, exist_ok=True)
-    tmp = dst + ".part"
-    urllib.request.urlretrieve(f"{BASE_URL}/{name}.tar.zst", tmp)
-    os.replace(tmp, dst)
-    return dst
-
-
-def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
-    for m in tf.getmembers():
-        if not m.name.endswith(".json"):
-            continue
-        try:
-            yield json.load(tf.extractfile(m))["data"]
-        except Exception:
-            continue
-
-
-def home_side(rd, uid):
-    if rd["p2"]["publicData"]["uid"] == uid:
-        return "p2"
-    if rd["p1"]["publicData"]["uid"] == uid:
-        return "p1"
-    return None
-
-
 def main():
     t0 = time.time()
-    char_idx = {}
+    char_idx = AutoIndex()
     careers_seen = set()
     draft = defaultdict(lambda: [0, 0, 0, 0])   # (s,ch,car,slot,fid)->[off,pick,off6,pick6]
     held = defaultdict(lambda: [0, 0, 0, 0])    # (s,ch,car,rd,fid)->[w,g,w6,g6]
     pop4 = pop6 = 0
-
-    def cidx(c):
-        i = char_idx.get(c)
-        if i is None:
-            i = char_idx[c] = len(char_idx)
-        return i
 
     for ai, name in enumerate(ARCHIVES):
         try:
@@ -106,19 +51,13 @@ def main():
             print(f"[{ai+1}/{len(ARCHIVES)}] {name}: skip ({e})", flush=True)
             continue
         for d in iter_replays(path):
-            if d.get("seasonMec") not in SEASON_IDX:
-                continue
-            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
+            if not is_valid_game(d, SEASON_IDX, VERSION_FILTER, MIN_SCORE):
                 continue
             score = d.get("beginRankScore", 0)
-            if score < MIN_SCORE:
-                continue
             rs = d.get("roundStats") or []
-            if not rs:
-                continue
             hi = score >= HI_SCORE
             s = SEASON_IDX[d["seasonMec"]]
-            ch = cidx(d.get("charId"))
+            ch = char_idx[d.get("charId")]
             car = d.get("career", 0)
             careers_seen.add(car)
             uid = d.get("uid")
@@ -166,8 +105,7 @@ def main():
         print(f"[{ai+1}/{len(ARCHIVES)}] {name}: pop={pop4} "
               f"draft={len(draft)} held={len(held)} ({time.time()-t0:.0f}s)", flush=True)
 
-    inv_char = {i: c for c, i in char_idx.items()}
-    char_ids = [inv_char[i] for i in sorted(inv_char)]
+    char_ids = char_idx.ordered_keys()
 
     def emit_draft(dd):
         out = []
@@ -205,10 +143,7 @@ def main():
         "draft": emit_draft(draft),
         "held": emit_held(held),
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    sz = os.path.getsize(OUT) / 1e6
+    sz = write_json(OUT, out) / 1e6
     print(f"wrote {OUT}: {sz:.2f}MB  draft={len(out['draft'])//9} "
           f"held={len(out['held'])//9} chars={len(char_ids)} "
           f"pop4={pop4} pop6={pop6} ({time.time()-t0:.0f}s)", flush=True)

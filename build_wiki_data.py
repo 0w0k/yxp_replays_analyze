@@ -19,7 +19,7 @@ import re
 import subprocess
 import glob
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+from replay_utils import fam, HERE
 WIKI = os.environ.get("WIKI_DIR") or os.path.join(
     os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp", "wiki")
 OUT = os.path.join(HERE, "data", "wiki.json")
@@ -44,10 +44,6 @@ LEAD = {"1": "sw", "2": "he", "3": "fe", "4": "dx"}
 GROUP = {"cloud-spirit-sword-sect": "sw", "heptastar-pavilion": "he",
          "five-elements-alliance": "fe", "duan-xuan-sect": "dx",
          "general": "general", "heavenly-derivation": "heaven"}
-
-
-def fam(c):
-    return c - ((c // 10000) % 100) * 10000
 
 
 def ensure_wiki():

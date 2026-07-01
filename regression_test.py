@@ -10,7 +10,7 @@ import json
 import os
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+from replay_utils import fam, HERE
 D = lambda f: json.load(open(os.path.join(HERE, "data", f), encoding="utf-8"))
 MAIN_SECTS = {"sw", "he", "fe", "dx"}
 LEAD = {"1": "sw", "2": "he", "3": "fe", "4": "dx"}
@@ -84,8 +84,6 @@ def main():
 
     # ---- names/sect strictly from wiki -----------------------------------
     print("== wiki authority ==")
-    def fam(c):
-        return c - ((c // 10000) % 100) * 10000
     bad = []
     for c in decks["cards"]:
         w = wiki["cards"].get(str(fam(c["img"])))

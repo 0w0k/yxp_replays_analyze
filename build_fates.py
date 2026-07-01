@@ -18,30 +18,20 @@ Two metrics per system:
              how often it was offered (in pendings) vs picked (selected)
              keyed (season, char, career, id)  [offered,picked,off6,pick6]
 """
-import io
 import json
 import os
-import tarfile
 import time
-import urllib.request
 from collections import defaultdict
 
-import zstandard
+import cardnames
+from replay_utils import (
+    HERE, build_archives, build_env, download, fam,
+    home_side, is_valid_game, iter_replays, season_index,
+    write_json, AutoIndex,
+)
 
-BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main"
-# Season 9 = 天衍万象 (current). Local clone archives in this range are seasonMec 9.
-FIRST, LAST, STEP = 30210000, 30869000, 1000
-# Optional per-version build overrides (defaults keep the original behaviour).
-FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
-LAST = int(os.environ.get("BUILD_LAST", LAST))
-VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
-OUT_DIR = os.environ.get("OUT_DIR") or "data"
-ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
-CACHE = os.environ.get("DECK_CACHE") or os.path.join(
-    os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
+FIRST, LAST, ARCHIVES = build_archives(30210000, 30869000)
+VERSION_FILTER, OUT_DIR = build_env()
 OUT = os.path.join(HERE, OUT_DIR, "fates.json")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
 # talent name maps from the sibling card-counter project (en + cn)
@@ -50,13 +40,10 @@ FATE_TALENT_MAP = os.path.join(COUNTER, "proxy", "fate_talent_map.json")
 FATE_ID_MAP = os.path.join(COUNTER, "proxy", "fate_id_map.json")
 
 SEASONS = [9]            # 天衍万象 only
-SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
+SEASON_IDX = season_index(SEASONS)
 MIN_SCORE = 4000
 HI_SCORE = 6000
-
-
-def fam(cid):
-    return cid - ((cid // 10000) % 100) * 10000
+MIN_HELD, MIN_DRAFT = 8, 8
 
 
 def tbase(tid):
@@ -64,46 +51,9 @@ def tbase(tid):
     return tid % 10000
 
 
-def download(name):
-    local = os.path.join(REPLAYS, name + ".tar.zst")
-    if os.path.exists(local) and os.path.getsize(local) > 1_000_000:
-        return local
-    dst = os.path.join(CACHE, name + ".tar.zst")
-    if os.path.exists(dst) and os.path.getsize(dst) > 1_000_000:
-        return dst
-    os.makedirs(CACHE, exist_ok=True)
-    tmp = dst + ".part"
-    urllib.request.urlretrieve(f"{BASE_URL}/{name}.tar.zst", tmp)
-    os.replace(tmp, dst)
-    return dst
-
-
-def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
-    for m in tf.getmembers():
-        if not m.name.endswith(".json"):
-            continue
-        try:
-            yield json.load(tf.extractfile(m))["data"]
-        except Exception:
-            continue
-
-
-def home_side(rd, uid):
-    # the file owner's side alternates p1/p2; homePlayerId is the battle's first
-    # player and is the opponent ~2/3 of the time, so match the owner's uid.
-    if rd["p2"]["publicData"]["uid"] == uid:
-        return "p2"
-    if rd["p1"]["publicData"]["uid"] == uid:
-        return "p1"
-    return None
-
-
 def main():
     t0 = time.time()
-    char_idx = {}
+    char_idx = AutoIndex()
     careers_seen = set()
     tal_held = defaultdict(lambda: [0, 0, 0, 0])   # (s,ch,car,rd,tal)->[w,g,w6,g6]
     tal_draft = defaultdict(lambda: [0, 0, 0, 0])  # (s,ch,car,tal)->[off,pick,off6,pick6]
@@ -112,28 +62,16 @@ def main():
     dy_draft = defaultdict(lambda: [0, 0, 0, 0])
     pop4 = pop6 = 0
 
-    def cidx(c):
-        i = char_idx.get(c)
-        if i is None:
-            i = char_idx[c] = len(char_idx)
-        return i
-
     for ai, name in enumerate(ARCHIVES):
         path = download(name)
         for d in iter_replays(path):
-            if d.get("seasonMec") not in SEASON_IDX:
-                continue
-            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
+            if not is_valid_game(d, SEASON_IDX, VERSION_FILTER, MIN_SCORE):
                 continue
             score = d.get("beginRankScore", 0)
-            if score < MIN_SCORE:
-                continue
             rs = d.get("roundStats") or []
-            if not rs:
-                continue
             hi = score >= HI_SCORE
             s = SEASON_IDX[d["seasonMec"]]
-            ch = cidx(d.get("charId"))
+            ch = char_idx[d.get("charId")]
             car = d.get("career", 0)
             careers_seen.add(car)
             uid = d.get("uid")        # the file owner; their side alternates p1/p2
@@ -225,7 +163,6 @@ def main():
     except Exception as e:
         print("warn: no fate_id_map", e)
 
-    import cardnames
     resolve = cardnames.load_resolver(REF_CARDS)
 
     def talent_name(b):
@@ -241,8 +178,7 @@ def main():
     tal_pos = {t: i for i, t in enumerate(tal_ids)}
     dy_pos = {t: i for i, t in enumerate(dy_ids)}
 
-    inv_char = {i: c for c, i in char_idx.items()}
-    char_ids = [inv_char[i] for i in sorted(inv_char)]
+    char_ids = char_idx.ordered_keys()
 
     def emit_held(dd, pos):
         out = []
@@ -292,16 +228,12 @@ def main():
         "dyHeld": emit_held(dy_held, dy_pos),
         "dyDraft": emit_draft(dy_draft, dy_pos),
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    sz = os.path.getsize(OUT) / 1e6
+    sz = write_json(OUT, out) / 1e6
     print(f"wrote {OUT}: {sz:.1f}MB  talents={len(tal_ids)} daoyun={len(dy_ids)} "
           f"talHeld={len(out['talHeld'])//9} talDraft={len(out['talDraft'])//8} "
           f"dyHeld={len(out['dyHeld'])//9} dyDraft={len(out['dyDraft'])//8} "
           f"pop4={pop4} pop6={pop6} ({time.time()-t0:.0f}s)", flush=True)
 
 
-MIN_HELD, MIN_DRAFT = 8, 8
 if __name__ == "__main__":
     main()

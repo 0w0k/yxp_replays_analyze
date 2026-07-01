@@ -14,7 +14,7 @@ import json
 import os
 from collections import defaultdict
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+from replay_utils import HERE, write_json
 # IN_DIR = 业务数据来源(可指向 data/v175 做按版本汇总)，STATIC = 版本无关的静态文件
 # (fates_wiki.json 永远从 data/ 读)，OUT_DIR = 输出目录。默认全为 data/，行为不变。
 IN_DIR = os.path.join(HERE, os.environ.get("IN_DIR") or "data")
@@ -167,10 +167,8 @@ def main():
         },
         "cards": cards, "combos": combos, "fates": fates, "tianyan": tianyan,
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=1)
-    print("wrote", OUT, os.path.getsize(OUT), "bytes")
+    sz = write_json(OUT, out, indent=1)
+    print("wrote", OUT, sz, "bytes")
 
 
 if __name__ == "__main__":
