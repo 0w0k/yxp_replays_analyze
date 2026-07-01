@@ -1,6 +1,10 @@
 "use strict";
 const WIKI = "https://sharpobject.github.io/yxp_wiki/assets/cards/";
 const WIKI_FATES = "https://sharpobject.github.io/yxp_wiki/assets/fates/";
+function esc(s) {
+  if (typeof s !== "string") return String(s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
 // ---- i18n ------------------------------------------------------------------
 const UI = {
@@ -264,7 +268,7 @@ function headerRow() {
   return el;
 }
 function nameCell(c) {
-  const nm = itemName(c);
+  const nm = esc(itemName(c));
   if (S.sys === "dy") {
     // dao-yun grants a card -> show that card's art (wiki fates folder)
     const src = c.img ? `${WIKI_FATES}Card_${c.img}.png` : "";

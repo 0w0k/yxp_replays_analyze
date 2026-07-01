@@ -1,5 +1,9 @@
 "use strict";
 const WIKI = "https://sharpobject.github.io/yxp_wiki/assets/cards/";
+function esc(s) {
+  if (typeof s !== "string") return String(s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 const STRIDE = 8; // [seasonIdx, charIdx, career, fam, level, round, wins, losses]
 
 // ---- i18n ------------------------------------------------------------------
@@ -298,8 +302,8 @@ function tile(r) {
   el.className = "card";
   el.innerHTML = `
     <img loading="lazy" src="${WIKI}${c.img}_${S.lang}.png"
-      onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="${name}">
-    <div class="nm">${name}</div>
+      onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="${esc(name)}">
+    <div class="nm">${esc(name)}</div>
     <div class="sect">${sectLabel(c.sect)}</div>
     <div class="stats"><span class="wr" style="color:${col}">${(r.wr * 100).toFixed(1)}%</span>
       <span class="pop">n=${r.g.toLocaleString()}</span></div>

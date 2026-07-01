@@ -1,4 +1,8 @@
 "use strict";
+function esc(s) {
+  if (typeof s !== "string") return String(s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 // 天衍万象仙命（天衍）统计页。
 // 数据：data/tianyan.json（fateStrategyData 聚合）+ data/fates_wiki.json（wiki 权威映射）。
 // 命格 id 直接对应 fates_wiki.byId，名称/门派/分类/图标全部取自 wiki。
@@ -227,9 +231,9 @@ function headerRow() {
 }
 function nameCell(id) {
   const info = W.byId[id] || {};
-  const nm = fateName(id), src = fateIcon(id);
-  const sub = info.sect ? `<span class="fsect">${info.sect}${info.category ? " · " + info.category : ""}</span>` : "";
-  return `<span class="cthumb tchip" title="${nm}${info.desc ? " — " + info.desc : ""}">
+  const nm = esc(fateName(id)), src = fateIcon(id);
+  const sub = info.sect ? `<span class="fsect">${esc(info.sect)}${info.category ? " · " + esc(info.category) : ""}</span>` : "";
+  return `<span class="cthumb tchip" title="${nm}${info.desc ? " — " + esc(info.desc) : ""}">
     <img class="talimg" loading="lazy" src="${src}"
       onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-block'" alt="">
     <span class="tdot" style="display:none"></span>

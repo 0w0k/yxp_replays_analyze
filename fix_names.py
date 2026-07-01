@@ -16,7 +16,7 @@ import cardnames
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REF = os.path.join(HERE, "data", "data_4000.json")
-COUNTER = r"D:\Coding\yixian-card-counter-with-proxy\proxy"
+COUNTER = os.environ.get("COUNTER_DIR") or os.path.join(HERE, "..", "yixian-card-counter-with-proxy", "proxy")
 resolve = cardnames.load_resolver(REF)
 famof = cardnames.fam
 

@@ -1,4 +1,8 @@
 "use strict";
+function esc(s) {
+  if (typeof s !== "string") return String(s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 // 首页(landing)：读 data/home.json，用 Chart.js 渲染 4 个吸睛的聚合数据图（仪表盘风格）：
 //   卡牌=出场×胜率 四象限散点(按门派着色) · 卡组=连招 lift 渐变条形
 //   仙命=天赋持有胜率 渐变条形 · 天衍=门派选取占比 环形
@@ -254,7 +258,7 @@ function fillLegend() {
 }
 
 function chip(label, name, value) {
-  return `<span class="chip-tag">${label}</span><span class="chip-name">${name}</span><b>${value}</b>`;
+  return `<span class="chip-tag">${esc(label)}</span><span class="chip-name">${esc(name)}</span><b>${esc(value)}</b>`;
 }
 function fillStats() {
   if (!H) return;
