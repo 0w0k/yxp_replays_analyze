@@ -21,6 +21,7 @@ Two metrics per system:
 import io
 import json
 import os
+import sys
 import tarfile
 import time
 import urllib.request
@@ -79,16 +80,32 @@ def download(name):
 
 
 def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
+    try:
+        with open(path, "rb") as f:
+            raw = zstandard.ZstdDecompressor().stream_reader(f).read()
+    except (OSError, zstandard.ZstdError) as e:
+        print(f"ERROR: cannot read archive {path}: {e}", file=sys.stderr)
+        return
+    try:
+        tf = tarfile.open(fileobj=io.BytesIO(raw))
+    except tarfile.TarError as e:
+        print(f"ERROR: corrupt tar archive {path}: {e}", file=sys.stderr)
+        return
+    skipped = 0
     for m in tf.getmembers():
         if not m.name.endswith(".json"):
             continue
         try:
             yield json.load(tf.extractfile(m))["data"]
-        except Exception:
-            continue
+        except (json.JSONDecodeError, KeyError, TypeError):
+            skipped += 1
+        except Exception as e:
+            skipped += 1
+            print(f"warn: {path}/{m.name}: {type(e).__name__}: {e}",
+                  file=sys.stderr)
+    if skipped:
+        print(f"  skipped {skipped} unreadable replay(s) in {path}",
+              file=sys.stderr)
 
 
 def home_side(rd, uid):
@@ -212,18 +229,26 @@ def main():
     # ---- names -------------------------------------------------------------
     talent_en, talent_cn = {}, {}
     try:
-        ftm = json.load(open(FATE_TALENT_MAP, encoding="utf-8"))
+        with open(FATE_TALENT_MAP, encoding="utf-8") as _f:
+            ftm = json.load(_f)
         for k, v in ftm.items():
             talent_en[int(k)] = v.get("name")
             talent_cn[int(k)] = v.get("nameCn")
-    except Exception as e:
-        print("warn: no fate_talent_map", e)
+    except FileNotFoundError:
+        print(f"warn: fate_talent_map not found: {FATE_TALENT_MAP}",
+              file=sys.stderr)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"warn: fate_talent_map unreadable: {e}", file=sys.stderr)
     try:
-        fid = json.load(open(FATE_ID_MAP, encoding="utf-8"))
+        with open(FATE_ID_MAP, encoding="utf-8") as _f:
+            fid = json.load(_f)
         for k, v in fid.items():
             talent_cn.setdefault(int(k), v)
-    except Exception as e:
-        print("warn: no fate_id_map", e)
+    except FileNotFoundError:
+        print(f"warn: fate_id_map not found: {FATE_ID_MAP}",
+              file=sys.stderr)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"warn: fate_id_map unreadable: {e}", file=sys.stderr)
 
     import cardnames
     resolve = cardnames.load_resolver(REF_CARDS)

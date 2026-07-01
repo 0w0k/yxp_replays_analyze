@@ -48,6 +48,10 @@ def fetch():
         return html
     except Exception as e:
         print(f"fetch failed ({e}); falling back to cache {CACHE}", flush=True)
+        if not os.path.exists(CACHE):
+            raise RuntimeError(
+                f"wiki fetch failed and no cached copy at {CACHE}"
+            ) from e
         return open(CACHE, encoding="utf-8").read()
 
 

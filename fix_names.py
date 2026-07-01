@@ -11,6 +11,7 @@ aggregated fact arrays untouched. Run after the builds.
 """
 import json
 import os
+import sys
 
 import cardnames
 
@@ -37,21 +38,30 @@ def talent_id_index():
     """Build cn-name / en-name -> talent base id, to recover the base id for
     Icon_Talent images."""
     cn2id, en2id = {}, {}
+    ftm_path = os.path.join(COUNTER, "fate_talent_map.json")
     try:
-        ftm = json.load(open(os.path.join(COUNTER, "fate_talent_map.json"), encoding="utf-8"))
+        with open(ftm_path, encoding="utf-8") as f:
+            ftm = json.load(f)
         for k, v in ftm.items():
             if v.get("nameCn"):
                 cn2id.setdefault(v["nameCn"], int(k))
             if v.get("name"):
                 en2id.setdefault(v["name"], int(k))
-    except Exception as e:
-        print("fix: no fate_talent_map", e)
+    except FileNotFoundError:
+        print(f"fix: fate_talent_map not found: {ftm_path}",
+              file=sys.stderr)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"fix: fate_talent_map unreadable: {e}", file=sys.stderr)
+    fid_path = os.path.join(COUNTER, "fate_id_map.json")
     try:
-        fid = json.load(open(os.path.join(COUNTER, "fate_id_map.json"), encoding="utf-8"))
+        with open(fid_path, encoding="utf-8") as f:
+            fid = json.load(f)
         for k, v in fid.items():
             cn2id.setdefault(v, int(k))
-    except Exception as e:
-        print("fix: no fate_id_map", e)
+    except FileNotFoundError:
+        print(f"fix: fate_id_map not found: {fid_path}", file=sys.stderr)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"fix: fate_id_map unreadable: {e}", file=sys.stderr)
     return cn2id, en2id
 
 

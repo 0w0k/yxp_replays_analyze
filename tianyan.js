@@ -47,22 +47,33 @@ const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; 
 // business data dir per selected version ("v175" -> data/v175, "prev" -> data)
 const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`fetch ${url}: ${r.status} ${r.statusText}`);
+  return r.json();
+}
 async function boot() {
-  // fates_wiki.json is version-independent (always from data/)
-  [NAMES, W] = await Promise.all([
-    fetch("data/names.json").then((r) => r.json()),
-    fetch("data/fates_wiki.json").then((r) => r.json()),
-  ]);
-  ICON = W._meta.iconBase;
-  SECT_OF = {};                                   // fateId -> sect name
-  for (const k in W.byId) { SECT_OF[+k] = W.byId[k].sect; if (+k > MAXID) MAXID = +k; }
-  S.fatesects = new Set(W.sects.map((s) => s.name));
-  buildFateSect();
-  wireStatic();
-  await loadVersion();
+  try {
+    // fates_wiki.json is version-independent (always from data/)
+    [NAMES, W] = await Promise.all([
+      fetchJSON("data/names.json"),
+      fetchJSON("data/fates_wiki.json"),
+    ]);
+    ICON = W._meta.iconBase;
+    SECT_OF = {};                                   // fateId -> sect name
+    for (const k in W.byId) { SECT_OF[+k] = W.byId[k].sect; if (+k > MAXID) MAXID = +k; }
+    S.fatesects = new Set(W.sects.map((s) => s.name));
+    buildFateSect();
+    wireStatic();
+    await loadVersion();
+  } catch (e) {
+    console.error("boot failed:", e);
+    const el = $("#grid") || document.body;
+    el.innerHTML = `<div class="empty" style="color:#e85050;padding:2em">Failed to load data: ${e.message}</div>`;
+  }
 }
 async function loadVersion() {
-  F = await fetch(`${dataBase()}/tianyan.json`).then((r) => r.json());
+  F = await fetchJSON(`${dataBase()}/tianyan.json`);
   S.careers = new Set(F.meta.careers);
   S.chars = new Set(F.meta.charIds);
   buildCareer(); buildCharacter(); applyLang(); render();

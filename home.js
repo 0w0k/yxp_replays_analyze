@@ -95,7 +95,15 @@ async function boot() {
   Chart.defaults.color = C.muted;
   Chart.defaults.font.family = "system-ui,-apple-system,Segoe UI,Roboto,'Microsoft YaHei',sans-serif";
   Chart.defaults.font.size = 11;
-  try { H = await fetch("data/v175/home.json").then((r) => r.json()); } catch (e) { H = null; }
+  try {
+    const r = await fetch("data/v175/home.json");
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    H = await r.json();
+  } catch (e) {
+    console.error("home.json load failed:", e);
+    H = null;
+    $("#updatedPill").textContent = "Data load failed: " + e.message;
+  }
   applyLang(); renderAll();
 }
 

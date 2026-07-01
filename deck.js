@@ -72,13 +72,24 @@ const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; 
 const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
 // ---- load ------------------------------------------------------------------
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`fetch ${url}: ${r.status} ${r.statusText}`);
+  return r.json();
+}
 async function boot() {
-  NAMES = await fetch("data/names.json").then((r) => r.json());
-  wireStatic();
-  await loadVersion();
+  try {
+    NAMES = await fetchJSON("data/names.json");
+    wireStatic();
+    await loadVersion();
+  } catch (e) {
+    console.error("boot failed:", e);
+    const el = $("#grid") || document.body;
+    el.innerHTML = `<div class="empty" style="color:#e85050;padding:2em">Failed to load data: ${e.message}</div>`;
+  }
 }
 async function loadVersion() {
-  DECK = await fetch(`${dataBase()}/decks.json`).then((r) => r.json());
+  DECK = await fetchJSON(`${dataBase()}/decks.json`);
   CMB = null;            // combos re-fetched per version on demand
   S.combo = null; closeModal();
   NCARD = DECK.cards.length;
@@ -88,7 +99,7 @@ async function loadVersion() {
   S.chars = new Set(m.charIds);
   S.rlo = m.rounds[0]; S.rhi = m.rounds[1];
   buildCareer(); buildCharacter(); buildRoundSlider();
-  if (S.size >= 3) CMB = await fetch(`${dataBase()}/combos.json`).then((r) => r.json()).catch(() => null);
+  if (S.size >= 3) CMB = await fetchJSON(`${dataBase()}/combos.json`).catch((e) => { console.warn("combos.json:", e.message); return null; });
   setSizeUI(); applyLang(); render();
 }
 // the active data source depends on the selected combo size
@@ -525,7 +536,7 @@ function wireStatic() {
     S.size = +v; closeModal(); setSizeUI();
     if (S.size >= 3 && !CMB) {          // lazy-load the multi-card data on demand
       $("#grid").innerHTML = `<div class="empty">…</div>`;
-      CMB = await fetch(`${dataBase()}/combos.json`).then((r) => r.json()).catch(() => null);
+      CMB = await fetchJSON(`${dataBase()}/combos.json`).catch((e) => { console.warn("combos.json:", e.message); return null; });
     }
     render();
   });

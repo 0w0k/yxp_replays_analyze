@@ -12,6 +12,7 @@
 import datetime
 import json
 import os
+import sys
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,12 +33,31 @@ SECT_CN = {"sw": "云灵剑宗", "he": "七星阁", "fe": "五行道盟", "dx": 
 
 
 def load(name):
-    return json.load(open(os.path.join(D, name), encoding="utf-8"))
+    path = os.path.join(D, name)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"ERROR: required data file not found: {path}", file=sys.stderr)
+        raise
+    except json.JSONDecodeError as e:
+        print(f"ERROR: invalid JSON in {path}: {e}", file=sys.stderr)
+        raise
 
 
 def load_static(name):
     # 版本无关的静态文件(如 fates_wiki.json)始终从 data/ 读
-    return json.load(open(os.path.join(STATIC, name), encoding="utf-8"))
+    path = os.path.join(STATIC, name)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"ERROR: required static file not found: {path}",
+              file=sys.stderr)
+        raise
+    except json.JSONDecodeError as e:
+        print(f"ERROR: invalid JSON in {path}: {e}", file=sys.stderr)
+        raise
 
 
 def top_cards():
