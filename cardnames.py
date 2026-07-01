@@ -8,6 +8,7 @@ en falls back to cn for new cards.
 """
 import json
 import os
+import sys
 
 CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
     r"D:\Coding\yixian-card-counter-with-proxy\proxy\card_id_map.json"
@@ -23,19 +24,32 @@ def load_resolver(ref_cards_path):
     # img (wiki card-art id) still comes from the old catalog where present
     old = {}
     try:
-        ref = json.load(open(ref_cards_path, encoding="utf-8"))
+        with open(ref_cards_path, encoding="utf-8") as _f:
+            ref = json.load(_f)
         for c in ref["cards"]:
             old[fam(c["img"])] = c
-    except Exception as e:
-        print("cardnames: no ref catalog", e)
+    except FileNotFoundError:
+        print(f"cardnames: ref catalog not found: {ref_cards_path}",
+              file=sys.stderr)
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"cardnames: ref catalog unreadable: {e}", file=sys.stderr)
     try:
-        wiki = json.load(open(WIKI_DATA, encoding="utf-8"))["cards"]
-    except Exception as e:
-        print("cardnames: no wiki.json", e)
+        with open(WIKI_DATA, encoding="utf-8") as _f:
+            wiki = json.load(_f)["cards"]
+    except FileNotFoundError:
+        print(f"cardnames: wiki.json not found: {WIKI_DATA}",
+              file=sys.stderr)
+        wiki = {}
+    except (json.JSONDecodeError, KeyError) as e:
+        print(f"cardnames: wiki.json unreadable: {e}", file=sys.stderr)
         wiki = {}
     try:
-        cim = {int(k): v for k, v in json.load(open(CARD_ID_MAP, encoding="utf-8")).items()}
-    except Exception:
+        with open(CARD_ID_MAP, encoding="utf-8") as _f:
+            cim = {int(k): v for k, v in json.load(_f).items()}
+    except FileNotFoundError:
+        cim = {}
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"cardnames: card_id_map unreadable: {e}", file=sys.stderr)
         cim = {}
 
     def resolve(famid):

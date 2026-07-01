@@ -16,6 +16,7 @@ Output (one flat int array per size, like the pair page):
 import io
 import json
 import os
+import sys
 import tarfile
 import time
 from collections import defaultdict, Counter
@@ -66,15 +67,31 @@ def src(name):
 
 
 def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
+    try:
+        with open(path, "rb") as f:
+            raw = zstandard.ZstdDecompressor().stream_reader(f).read()
+    except (OSError, zstandard.ZstdError) as e:
+        print(f"ERROR: cannot read archive {path}: {e}", file=sys.stderr)
+        return
+    try:
+        tf = tarfile.open(fileobj=io.BytesIO(raw))
+    except tarfile.TarError as e:
+        print(f"ERROR: corrupt tar archive {path}: {e}", file=sys.stderr)
+        return
+    skipped = 0
     for m in tf.getmembers():
         if m.name.endswith(".json"):
             try:
                 yield json.load(tf.extractfile(m))["data"]
-            except Exception:
-                continue
+            except (json.JSONDecodeError, KeyError, TypeError):
+                skipped += 1
+            except Exception as e:
+                skipped += 1
+                print(f"warn: {path}/{m.name}: {type(e).__name__}: {e}",
+                      file=sys.stderr)
+    if skipped:
+        print(f"  skipped {skipped} unreadable replay(s) in {path}",
+              file=sys.stderr)
 
 
 def main():

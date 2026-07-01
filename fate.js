@@ -57,14 +57,25 @@ const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; 
 const dataBase = () => (S.version === "v175" ? "data/v175" : "data");
 
 // ---- load ------------------------------------------------------------------
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`fetch ${url}: ${r.status} ${r.statusText}`);
+  return r.json();
+}
 async function boot() {
-  NAMES = await fetch("data/names.json").then((r) => r.json());
-  wireStatic();
-  await loadVersion();
+  try {
+    NAMES = await fetchJSON("data/names.json");
+    wireStatic();
+    await loadVersion();
+  } catch (e) {
+    console.error("boot failed:", e);
+    const el = $("#grid") || document.body;
+    el.innerHTML = `<div class="empty" style="color:#e85050;padding:2em">Failed to load data: ${e.message}</div>`;
+  }
 }
 async function loadVersion() {
   closeModal();
-  F = await fetch(`${dataBase()}/fates.json`).then((r) => r.json());
+  F = await fetchJSON(`${dataBase()}/fates.json`);
   const m = F.meta;
   S.careers = new Set(m.careers);
   S.chars = new Set(m.charIds);

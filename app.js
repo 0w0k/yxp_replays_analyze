@@ -73,15 +73,26 @@ let raf = 0;
 const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
 
 // ---- load ------------------------------------------------------------------
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`fetch ${url}: ${r.status} ${r.statusText}`);
+  return r.json();
+}
 async function boot() {
-  NAMES = await fetch("data/names.json").then((r) => r.json());
-  await loadThreshold(4000);
-  wireStatic();
+  try {
+    NAMES = await fetchJSON("data/names.json");
+    await loadThreshold(4000);
+    wireStatic();
+  } catch (e) {
+    console.error("boot failed:", e);
+    const el = $("#grid") || document.body;
+    el.innerHTML = `<div class="empty" style="color:#e85050;padding:2em">Failed to load data: ${e.message}</div>`;
+  }
 }
 async function loadThreshold(th) {
   S.th = th;
   const key = `${S.version}:${th}`;
-  if (!cache[key]) cache[key] = await fetch(`${dataBase()}/data_${th}.json`).then((r) => r.json());
+  if (!cache[key]) cache[key] = await fetchJSON(`${dataBase()}/data_${th}.json`);
   DATA = cache[key];
   const m = DATA.meta;
   // default selections = everything
