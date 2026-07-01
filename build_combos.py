@@ -13,32 +13,25 @@ Output (one flat int array per size, like the pair page):
   combos["k"] stride = 4 + k + 4 : [season,char,career,round, fam1..famk, w,g,w6,g6]
   plus singles (lift baseline) and the card list.
 """
-import io
-import json
 import os
-import tarfile
 import time
 from collections import defaultdict, Counter
 from itertools import combinations
 
-import zstandard
-
 import cardnames
+from replay_utils import (
+    HERE, build_archives, build_env, download_local_only, fam,
+    home_side, is_valid_game, iter_replays, season_index,
+    write_json, AutoIndex,
+)
 
-FIRST, LAST, STEP = 30210000, 30869000, 1000
-# Optional per-version build overrides (defaults keep the original behaviour).
-FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
-LAST = int(os.environ.get("BUILD_LAST", LAST))
-VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
-OUT_DIR = os.environ.get("OUT_DIR") or "data"
-ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
+FIRST, LAST, ARCHIVES = build_archives(30210000, 30869000)
+VERSION_FILTER, OUT_DIR = build_env()
 OUT = os.path.join(HERE, OUT_DIR, "combos.json")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
 
 SEASONS = [9]
-SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
+SEASON_IDX = season_index(SEASONS)
 MIN_SCORE, HI_SCORE = 4000, 6000
 MIN_K, MAX_K = 3, 6
 # per-size global support to keep (tuned for the full season)
@@ -54,45 +47,11 @@ LEAN_CAP = {3: 130000, 4: 80000, 5: 42000, 6: 20000}
 PCHAR, PCAR = 32, 8  # dims: season, char, career (NO round for 3+ card combos)
 
 
-def fam(c):
-    return c - ((c // 10000) % 100) * 10000
-
-
-def src(name):
-    local = os.path.join(REPLAYS, name + ".tar.zst")
-    if os.path.exists(local):
-        return local
-    return None
-
-
-def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
-    for m in tf.getmembers():
-        if m.name.endswith(".json"):
-            try:
-                yield json.load(tf.extractfile(m))["data"]
-            except Exception:
-                continue
-
-
 def main():
     t0 = time.time()
-    fam_idx, char_idx = {}, {}
+    fam_idx = AutoIndex()
+    char_idx = AutoIndex()
     careers_seen = set()
-
-    def fidx(f):
-        i = fam_idx.get(f)
-        if i is None:
-            i = fam_idx[f] = len(fam_idx)
-        return i
-
-    def cidx(c):
-        i = char_idx.get(c)
-        if i is None:
-            i = char_idx[c] = len(char_idx)
-        return i
 
     # ---- 1. load every round-board into memory --------------------------
     # board = (dimkey, win, hi, fams_tuple)  ; dimkey packs (s,ch,car,rd)
@@ -100,35 +59,28 @@ def main():
     singles = defaultdict(lambda: [0, 0, 0, 0])
     pop4 = pop6 = 0
     for ai, name in enumerate(ARCHIVES):
-        path = src(name)
+        path = download_local_only(name)
         if not path:
             continue
         for d in iter_replays(path):
-            if d.get("seasonMec") not in SEASON_IDX:
-                continue
-            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
+            if not is_valid_game(d, SEASON_IDX, VERSION_FILTER, MIN_SCORE):
                 continue
             score = d.get("beginRankScore", 0)
-            if score < MIN_SCORE:
-                continue
             rs = d.get("roundStats") or []
-            if not rs:
-                continue
             hi = 1 if score >= HI_SCORE else 0
             s = SEASON_IDX[d["seasonMec"]]
-            ch = cidx(d.get("charId"))
+            ch = char_idx[d.get("charId")]
             car = d.get("career", 0)
             careers_seen.add(car)
             uid = d.get("uid")
             pop4 += 1
             pop6 += hi
             for rd in rs:
-                side = "p2" if rd["p2"]["publicData"]["uid"] == uid else (
-                    "p1" if rd["p1"]["publicData"]["uid"] == uid else None)
+                side = home_side(rd, uid)
                 if side is None:
                     continue
                 used = rd[side]["privateData"].get("usedCards") or []
-                fs = sorted({fidx(fam(c)) for c in used if c})
+                fs = sorted({fam_idx[fam(c)] for c in used if c})
                 if not fs:
                     continue
                 win = 1 if rd.get("winerId") == uid else 0
@@ -214,7 +166,7 @@ def main():
             sing_rows[(dim, a)] = v
             keep.add(a)
 
-    inv_fam = {i: f for f, i in fam_idx.items()}
+    inv_fam = fam_idx.inverted()
     fam_order = sorted(keep, key=lambda i: inv_fam[i])
     old_to_new = {old: i for i, old in enumerate(fam_order)}
 
@@ -225,8 +177,7 @@ def main():
         cards.append({"i": len(cards), "en": m["en"], "cn": m["cn"],
                       "sect": m["sect"], "img": m["img"]})
 
-    inv_char = {i: c for c, i in char_idx.items()}
-    char_ids = [inv_char[i] for i in sorted(inv_char)]
+    char_ids = char_idx.ordered_keys()
 
     def unpack(dim):
         car = dim % PCAR
@@ -274,10 +225,7 @@ def main():
         "singles": sing_arr,
         "combos": combos_arr,
     }
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    sz = os.path.getsize(OUT) / 1e6
+    sz = write_json(OUT, out) / 1e6
     counts = {k: len(v) // (3 + int(k) + 4) for k, v in combos_arr.items()}
     print(f"wrote {OUT}: {sz:.1f}MB cards={len(cards)} rows-per-size={counts} "
           f"({time.time()-t0:.0f}s)", flush=True)

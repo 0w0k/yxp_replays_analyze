@@ -11,124 +11,57 @@ Round-level methodology (a card on the home board that round; winerId == home).
 Levels are kept separate (level = (id//10000)%100 + 1). Names cover season-9 new
 cards via cardnames.load_resolver.
 """
-import io
-import json
 import os
-import tarfile
 import time
-import urllib.request
 from collections import defaultdict
 
-import zstandard
-
 import cardnames
+from replay_utils import (
+    HERE, accumulate, build_archives, build_env, download, fam,
+    home_side, is_valid_game, iter_replays, level_of, season_index,
+    write_json, AutoIndex,
+)
 
-BASE_URL = "https://huggingface.co/datasets/sharpobject/yxp_replays/resolve/main"
-FIRST, LAST, STEP = 30210000, 30869000, 1000
-# Optional per-version build overrides (defaults keep the original behaviour):
-#   BUILD_FIRST/BUILD_LAST -> archive range; VERSION_FILTER -> require d["version"];
-#   OUT_DIR -> output dir (e.g. "data/v175"). REF_CARDS stays the canonical data/.
-FIRST = int(os.environ.get("BUILD_FIRST", FIRST))
-LAST = int(os.environ.get("BUILD_LAST", LAST))
-VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
-OUT_DIR = os.environ.get("OUT_DIR") or "data"
-ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
+FIRST, LAST, ARCHIVES = build_archives(30210000, 30869000)
+VERSION_FILTER, OUT_DIR = build_env()
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
-CACHE = os.environ.get("DECK_CACHE") or os.path.join(
-    os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
 OUT4 = os.path.join(HERE, OUT_DIR, "data_4000.json")
 OUT6 = os.path.join(HERE, OUT_DIR, "data_6000.json")
 os.makedirs(os.path.join(HERE, OUT_DIR), exist_ok=True)
 
 SEASONS = [9]
-SEASON_IDX = {s: i for i, s in enumerate(SEASONS)}
+SEASON_IDX = season_index(SEASONS)
 MIN_SCORE, HI_SCORE = 4000, 6000
 
 PCHAR, PCAR, PLVL, PRD, PFAM = 32, 8, 8, 32, 1024
 
 
-def fam(c):
-    return c - ((c // 10000) % 100) * 10000
-
-
-def level_of(c):
-    return (c // 10000) % 100 + 1
-
-
-def src(name):
-    local = os.path.join(REPLAYS, name + ".tar.zst")
-    if os.path.exists(local) and os.path.getsize(local) > 1_000_000:
-        return local
-    dst = os.path.join(CACHE, name + ".tar.zst")
-    if os.path.exists(dst) and os.path.getsize(dst) > 1_000_000:
-        return dst
-    os.makedirs(CACHE, exist_ok=True)
-    tmp = dst + ".part"
-    urllib.request.urlretrieve(f"{BASE_URL}/{name}.tar.zst", tmp)
-    os.replace(tmp, dst)
-    return dst
-
-
-def iter_replays(path):
-    with open(path, "rb") as f:
-        raw = zstandard.ZstdDecompressor().stream_reader(f).read()
-    tf = tarfile.open(fileobj=io.BytesIO(raw))
-    for m in tf.getmembers():
-        if m.name.endswith(".json"):
-            try:
-                yield json.load(tf.extractfile(m))["data"]
-            except Exception:
-                continue
-
-
 def main():
     t0 = time.time()
-    fam_idx, char_idx = {}, {}
+    fam_idx = AutoIndex()
+    char_idx = AutoIndex()
     fam_lv = defaultdict(dict)     # famid -> {level: representative id}
     careers_seen, levels_seen = set(), set()
     facts = defaultdict(lambda: [0, 0, 0, 0])  # key -> [w,g,w6,g6]
     pop4 = pop6 = 0
 
-    def fidx(f):
-        i = fam_idx.get(f)
-        if i is None:
-            i = fam_idx[f] = len(fam_idx)
-        return i
-
-    def cidx(c):
-        i = char_idx.get(c)
-        if i is None:
-            i = char_idx[c] = len(char_idx)
-        return i
-
     for ai, name in enumerate(ARCHIVES):
-        for d in iter_replays(src(name)):
-            if d.get("seasonMec") not in SEASON_IDX:
-                continue
-            if VERSION_FILTER and d.get("version") != VERSION_FILTER:
+        for d in iter_replays(download(name)):
+            if not is_valid_game(d, SEASON_IDX, VERSION_FILTER, MIN_SCORE):
                 continue
             score = d.get("beginRankScore", 0)
-            if score < MIN_SCORE:
-                continue
             rs = d.get("roundStats") or []
-            if not rs:
-                continue
             hi = score >= HI_SCORE
             s = SEASON_IDX[d["seasonMec"]]
-            ch = cidx(d.get("charId"))
+            ch = char_idx[d.get("charId")]
             car = d.get("career", 0)
             careers_seen.add(car)
             uid = d.get("uid")        # the file owner; their side alternates p1/p2
             pop4 += 1
             pop6 += 1 if hi else 0
             for rd in rs:
-                # homePlayerId is the battle's first player (opponent ~2/3 of the
-                # time); match the file owner's uid to read THEIR board.
-                side = "p2" if rd["p2"]["publicData"]["uid"] == uid else (
-                    "p1" if rd["p1"]["publicData"]["uid"] == uid else None)
+                side = home_side(rd, uid)
                 if side is None:
                     continue
                 win = 1 if rd.get("winerId") == uid else 0
@@ -140,14 +73,9 @@ def main():
                     lv = level_of(c)
                     fam_lv[f].setdefault(lv, c)
                     levels_seen.add(lv)
-                    fi = fidx(f)
+                    fi = fam_idx[f]
                     key = (((((s * PCHAR + ch) * PCAR + car) * PLVL + lv) * PRD + rn) * PFAM + fi)
-                    v = facts[key]
-                    v[0] += win
-                    v[1] += 1
-                    if hi:
-                        v[2] += win
-                        v[3] += 1
+                    accumulate(facts[key], win, hi)
         print(f"[{ai+1}/{len(ARCHIVES)}] {name}: pop={pop4} facts={len(facts)} "
               f"({time.time()-t0:.0f}s)", flush=True)
 
@@ -162,7 +90,7 @@ def main():
     print(f"min games per fact row: {min_g}", flush=True)
 
     resolve = cardnames.load_resolver(REF_CARDS)
-    inv_fam = {i: f for f, i in fam_idx.items()}
+    inv_fam = fam_idx.inverted()
     # keep only families with a surviving row
     keep = set()
     for k, v in facts.items():
@@ -179,8 +107,7 @@ def main():
         cards.append({"i": new_i, "en": meta["en"], "cn": meta["cn"],
                       "sect": meta["sect"], "img": meta["img"], "lv": lv})
 
-    inv_char = {i: c for c, i in char_idx.items()}
-    char_ids = [inv_char[i] for i in sorted(inv_char)]
+    char_ids = char_idx.ordered_keys()
 
     def unpack(k):
         fi = k % PFAM
@@ -226,9 +153,7 @@ def main():
             "cards": cards,
             "facts": emit(hi),
         }
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
-        sz = os.path.getsize(out_path) / 1e6
+        sz = write_json(out_path, obj) / 1e6
         print(f"wrote {out_path}: {sz:.1f}MB facts={len(obj['facts'])//8} "
               f"cards={len(cards)} pop={pop} ({time.time()-t0:.0f}s)", flush=True)
 

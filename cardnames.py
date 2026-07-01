@@ -9,14 +9,12 @@ en falls back to cn for new cards.
 import json
 import os
 
+from replay_utils import fam  # noqa: F401 — re-exported for dependants
+
 CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
     r"D:\Coding\yixian-card-counter-with-proxy\proxy\card_id_map.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
 WIKI_DATA = os.path.join(HERE, "data", "wiki.json")  # single source of truth
-
-
-def fam(c):
-    return c - ((c // 10000) % 100) * 10000
 
 
 def load_resolver(ref_cards_path):
