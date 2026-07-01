@@ -1,5 +1,9 @@
 "use strict";
 const WIKI = "https://sharpobject.github.io/yxp_wiki/assets/cards/";
+function esc(s) {
+  if (typeof s !== "string") return String(s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
 // ---- i18n ------------------------------------------------------------------
 const UI = {
@@ -352,11 +356,11 @@ function headerRow() {
   return el;
 }
 function thumb(c) {
-  const name = cardName(c);
-  return `<span class="cthumb" title="${name}">
+  const name = cardName(c), safe = esc(name);
+  return `<span class="cthumb" title="${safe}">
     <img loading="lazy" src="${WIKI}${c.img}_${S.lang}.png"
-      onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="${name}">
-    <span class="cnm">${name}</span></span>`;
+      onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="${safe}">
+    <span class="cnm">${safe}</span></span>`;
 }
 function comboRow(r, rank, cards) {
   const wcol = wrColor(r.wr), lcol = liftColor(r.lift);
@@ -435,7 +439,7 @@ function soloWr(fam) {
 function cardMini(c, extra) {
   return `<div class="mcard">
     <img src="${WIKI}${c.img}_${S.lang}.png" onerror="this.onerror=null;this.src='${WIKI}${c.img}_en.png'" alt="">
-    <div><div class="mName" style="font-size:15px">${cardName(c)}</div>
+    <div><div class="mName" style="font-size:15px">${esc(cardName(c))}</div>
       <div class="mSect">${sectLabel(c.sect)}</div>${extra || ""}</div></div>`;
 }
 function renderModal() {

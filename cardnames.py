@@ -9,9 +9,9 @@ en falls back to cn for new cards.
 import json
 import os
 
-CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
-    r"D:\Coding\yixian-card-counter-with-proxy\proxy\card_id_map.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
+CARD_ID_MAP = os.environ.get("CARD_ID_MAP") or \
+    os.path.join(HERE, "..", "yixian-card-counter-with-proxy", "proxy", "card_id_map.json")
 WIKI_DATA = os.path.join(HERE, "data", "wiki.json")  # single source of truth
 
 

@@ -38,7 +38,7 @@ OUT_DIR = os.environ.get("OUT_DIR") or "data"
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
+REPLAYS = os.environ.get("REPLAYS_DIR") or os.path.join(HERE, "replays")
 CACHE = os.environ.get("DECK_CACHE") or os.path.join(
     os.environ.get("CLAUDE_JOB_DIR", HERE), "tmp")
 OUT = os.path.join(HERE, OUT_DIR, "tianyan.json")

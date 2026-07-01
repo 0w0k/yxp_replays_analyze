@@ -33,7 +33,7 @@ VERSION_FILTER = os.environ.get("VERSION_FILTER") or None
 OUT_DIR = os.environ.get("OUT_DIR") or "data"
 ARCHIVES = [f"{n}" for n in range(FIRST, LAST + 1, STEP)]
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPLAYS = os.environ.get("REPLAYS_DIR") or r"D:\Coding\yxp_replays_analyze\replays"
+REPLAYS = os.environ.get("REPLAYS_DIR") or os.path.join(HERE, "replays")
 OUT = os.path.join(HERE, OUT_DIR, "combos.json")
 REF_CARDS = os.path.join(HERE, "data", "data_4000.json")
 
